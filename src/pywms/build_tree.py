@@ -19,7 +19,7 @@ def build_from_nc(filename):
         for i, coord in enumerate(zip(lonc, latc, lonc, latc)):
             yield(i, coord, None)
 
-
+    filename = filename[:-3]
     tree = index.Index(filename+'_nodes', generator_nodes())
     print (datetime.now()-timer).seconds # How long did it take to add the points
     tree.close()
@@ -28,5 +28,5 @@ def build_from_nc(filename):
     print (datetime.now()-timer).seconds # How long did it take to add the points
 
 if __name__ == "__main__":
-    filename = sys.argv[1][:-3]
+    filename = sys.argv[1]
     build_from_nc(filename)
