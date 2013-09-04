@@ -46,7 +46,7 @@ def build_from_nc(filename):
         except:
             pass
         #print nc.variables['lon'].shape[0]*nc.variables['lon'].shape[1]
-        tree = BallTree(np.asarray(zip(lon, lat)), leaf_size=1000000, metric='euclidean')
+        tree = BallTree(np.asarray(zip(lon, lat)), leaf_size=1000, metric='euclidean')
         with open(filename+"_nodes.tree", 'w') as f:
             pickle.dump(tree, f)
     else:
@@ -57,11 +57,11 @@ def build_from_nc(filename):
         nv = nc.variables['nv'][:] # (3, long)
         nc.close()
         print np.asarray(zip(lon, lat)).shape
-        node_tree = BallTree(np.asarray(zip(lon, lat)), leaf_size=1000000, metric='euclidean')
+        node_tree = BallTree(np.asarray(zip(lon, lat)), leaf_size=1000, metric='euclidean')
         with open(filename+"_nodes.tree", 'w') as f:
             pickle.dump(node_tree, f)
         del lon, lat, node_tree
-        cell_tree = BallTree(np.asarray(zip(lonc, latc)), leaf_size=1000000, metric='euclidean')
+        cell_tree = BallTree(np.asarray(zip(lonc, lagc)), leaf_size=1000, metric='euclidean')
         with open(filename+"_cells.tree", 'w') as f:
             pickle.dump(cell_tree, f)
         del lonc, latc, cell_tree
