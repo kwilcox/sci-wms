@@ -948,43 +948,51 @@ def getFeatureInfo(request, dataset):
     if gridtype == 'False':
         test_index = 0
         if 'node' in styles:
-            tree = rindex.Index(dataset+'_nodes')
-            #lats = topology.variables['lat'][:]
-            #lons = topology.variables['lon'][:]
-            nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
+            with open(dataset+'_nodes.tree') as f:
+                tree = pickle.load(f)
+                nindex = tree.query((lon, lat), k=1)[1][0]
         else:
             from shapely.geometry import Polygon, Point
-            tree = rindex.Index(dataset+'_cells')
-            #lats = topology.variables['latc'][:]
-            #lons = topology.variables['lonc'][:]
-            nindex = list(tree.nearest((lon, lat, lon, lat), 4, objects=True))
+            with open(dataset+'_cells.tree') as f:
+                tree = pickle.load(f)
+                nindex = tree.query((lon, lat), k=4)[1][0]
             test_point = Point(lon,lat)
             test = -1
             for ii,i in enumerate(nindex):
-                lons = i.object[0]
-                lats = i.object[1]
-                test_cell = Polygon([(lons[0],lats[0]),
-                                    (lons[1],lats[1]),
-                                    (lons[2],lats[2]),
-                                    (lons[0],lats[0]),
+                nv = topology.variables['nv'][:]
+                lats = topology.variables['lat']
+                lons = topology.variables['lon']
+                test_cell = Polygon([(lons[nv[i,0]],lats[nv[i,0]]),
+                                     (lons[nv[i,1]],lats[nv[i,1]]),
+                                     (lons[nv[i,2]],lats[nv[i,2]]),
+                                     (lons[nv[i,0]],lats[nv[i,0]]),
                                     ])
                 if test_cell.contains(test_point):
                     test_index = ii
-                    test = i.id
+                    test = i
             if test == -1:
-                nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
-        selected_longitude, selected_latitude = tuple(nindex[test_index].bbox[:2])
-        index = nindex[test_index].id
-        tree.close()
+                nindex = tree.query((lon, lat), 1)[1][0]#maybe should return that request is outside of model?
+        index = nindex[test_index]
+        selected_longitude, selected_latitude = topology.variables['lonc'][index], topology.variables['latc'][index]
     else:
-        tree = rindex.Index(dataset+'_nodes')
+        with open(dataset+'_nodes.tree') as f:
+            tree = pickle.load(f)
+            nindex = tree.query((lon, lat), k=1)[1][0]
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
-        nindex = list(tree.nearest((lon, lat, lon, lat), 1, objects=True))
-        selected_longitude, selected_latitude = lons[nindex[0].object[0],nindex[0].object[1]][0], lats[nindex[0].object[0],nindex[0].object[1]][0]
-        index = nindex[0].object
-        tree.close()
-        index = numpy.asarray(index)
+        shape = lons.shape
+        length = shape[0]*shape[1]
+        index = nindex[0]
+        selected_longitude, selected_latitude = lons.flatten()[index], lat.flatten()[index]
+        div = length/shape[0]
+        rem = length%shape[0]
+        if rem == 0:
+            rind = shape[0]
+            cind = div
+        else:
+            rind = rem
+            cind = div + 1
+        index = numpy.asarray((rind, cind))
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
         TIME = request.GET["time"]

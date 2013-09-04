@@ -18,53 +18,53 @@ This file is part of SCI-WMS.
 '''
 
 import netCDF4, sys, os
-from rtree import index
+from sklearn.neighbors import BallTree, KDTree
 from datetime import datetime
+import numpy as np
+try:
+    import cPickle as pickle
+except:
+    import Pickle as pickle
 
 def build_from_nc(filename):
     timer = datetime.now()
     nc = netCDF4.Dataset(filename)
+    filename = filename[:-3]
     if nc.grid == 'cgrid':
-        lat = nc.variables['lat'][:]
-        lon = nc.variables['lon'][:]
-        nc.close()
-        #print lon.shape
-        def generator_nodes():
-            c = -1
-            for row in range(lon.shape[0]):
-                for col in range(lon.shape[1]):
-                    coord = (lon[row,col], lat[row,col], lon[row,col], lat[row,col],)
-                    c += 1
-                    yield(c, coord, ((row,), (col,)))
-
-        filename = filename[:-3]
-        tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
-        #print (datetime.now()-timer).seconds # How long did it take to add the points
-        tree.close()
+        lat = nc.variables['lat'][:].flatten()
+        lon = nc.variables['lon'][:].flatten()
+        #print nc.variables['lon'].shape[0]*nc.variables['lon'].shape[1]
+        #nc.close()
+        #print np.asarray(zip(lon, lat)).shape
+        try:
+            latb = np.ma.getmaskarray(lat)
+            lonb = np.ma.getmaskarray(lon)
+            lat = np.ma.getdata(lat)
+            lon = np.ma.getdata(lon)
+            lat[latb] = -9999
+            lon[lonb] = -9999
+        except:
+            pass
+        #print nc.variables['lon'].shape[0]*nc.variables['lon'].shape[1]
+        tree = BallTree(np.asarray(zip(lon, lat)), leaf_size=1000000, metric='euclidean')
+        with open(filename+"_nodes.tree", 'w') as f:
+            pickle.dump(tree, f)
     else:
         lat = nc.variables['lat'][:]
         lon = nc.variables['lon'][:]
         latc = nc.variables['latc'][:]
         lonc = nc.variables['lonc'][:]
         nv = nc.variables['nv'][:] # (3, long)
-        #print nv.shape, lonc.shape
         nc.close()
-
-        def generator_nodes():
-            for i, coord in enumerate(zip(lon, lat, lon, lat)):
-                yield(i, coord, None)
-
-        def generator_cells():
-            for i, coord in enumerate(zip(lonc, latc, lonc, latc)):
-                yield( i, coord, (lon[nv[:,i]-1], lat[nv[:,i]-1],) )
-
-        filename = filename[:-3]
-        tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
-        #print (datetime.now()-timer).seconds # How long did it take to add the points
-        tree.close()
-        tree = index.Index(filename+'_cells', generator_cells(), overwrite=True, pagesize=2**17)
-        tree.close()
-        #print (datetime.now()-timer).seconds # How long did it take to add the points
+        print np.asarray(zip(lon, lat)).shape
+        node_tree = BallTree(np.asarray(zip(lon, lat)), leaf_size=1000000, metric='euclidean')
+        with open(filename+"_nodes.tree", 'w') as f:
+            pickle.dump(node_tree, f)
+        del lon, lat, node_tree
+        cell_tree = BallTree(np.asarray(zip(lonc, latc)), leaf_size=1000000, metric='euclidean')
+        with open(filename+"_cells.tree", 'w') as f:
+            pickle.dump(cell_tree, f)
+        del lonc, latc, cell_tree
 
 if __name__ == "__main__":
     filename = sys.argv[1]
