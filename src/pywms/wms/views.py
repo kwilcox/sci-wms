@@ -962,16 +962,18 @@ def getFeatureInfo(request, dataset):
                 nv = topology.variables['nv'][:]
                 lats = topology.variables['lat']
                 lons = topology.variables['lon']
-                test_cell = Polygon([(lons[nv[i,0]],lats[nv[i,0]]),
-                                     (lons[nv[i,1]],lats[nv[i,1]]),
-                                     (lons[nv[i,2]],lats[nv[i,2]]),
-                                     (lons[nv[i,0]],lats[nv[i,0]]),
+                print i, nv.shape, lats.shape, lons.shape
+                print nv.T[i,0], nv.T[i,1], nv.T[i,2]
+                test_cell = Polygon([(lons[:][nv.T[i,0]],lats[:][nv.T[i,0]]),
+                                     (lons[:][nv.T[i,1]],lats[:][nv.T[i,1]]),
+                                     (lons[:][nv.T[i,2]],lats[:][nv.T[i,2]]),
+                                     (lons[:][nv.T[i,0]],lats[:][nv.T[i,0]]),
                                     ])
                 if test_cell.contains(test_point):
                     test_index = ii
                     test = i
             if test == -1:
-                nindex = tree.query((lon, lat), 1)[1][0]#maybe should return that request is outside of model?
+                nindex = tree.query((lon, lat), 1)[1][0]#maybe should return that request is outside of model error?
         index = nindex[test_index]
         selected_longitude, selected_latitude = topology.variables['lonc'][index], topology.variables['latc'][index]
     else:
@@ -983,16 +985,17 @@ def getFeatureInfo(request, dataset):
         shape = lons.shape
         length = shape[0]*shape[1]
         index = nindex[0]
-        selected_longitude, selected_latitude = lons.flatten()[index], lat.flatten()[index]
-        div = length/shape[0]
-        rem = length%shape[0]
+        selected_longitude, selected_latitude = lons.flatten()[index], lats.flatten()[index]
+        div = index/shape[0]
+        rem = index%shape[0]
         if rem == 0:
             rind = shape[0]
             cind = div
         else:
             rind = rem
             cind = div + 1
-        index = numpy.asarray((rind, cind))
+        index = numpy.asarray( ((rind,), (cind,)) )
+        print index
     #print 'final time to complete haversine ' + str(timeobj.time() - totaltimer)
     try:
         TIME = request.GET["time"]
