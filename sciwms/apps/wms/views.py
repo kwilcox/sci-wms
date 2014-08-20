@@ -1929,7 +1929,7 @@ def getMap(request, dataset):
 
             variable = map(lambda x: cf.get_by_standard_name(datasetnc, x['standard_name']), v)
             if None in variable:
-                logger.warning('requested LAYERS %s, standard_name %s does not exist in datasete' % (var,v['standard_name']))
+                logger.warning('requested LAYERS %s, at least one standard_name from %s does not exist in the dataset' % (var, map(lambda x: x['standard_name'], v)))
                 return blank_response(width, height) # was continue
 
             logger.info("getMap retrieving variables {0}".format(variables))
