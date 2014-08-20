@@ -1037,5 +1037,3 @@ def getLegendGraphic(request, dataset):
     canvas.print_png(response)
     nc.close()
     return response
-
-
