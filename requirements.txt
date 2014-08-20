@@ -11,3 +11,4 @@ rtree
 south
 jsonfield
 pyugrid
+pyproj

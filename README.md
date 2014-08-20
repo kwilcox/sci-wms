@@ -58,6 +58,7 @@ pip install matplotlib>=1.2.0
 pip install netCDF4>=1.0.2
 pip install rtree
 pip install south
+pip install pyproj
 pip install https://github.com/pyugrid/pyugrid.git
 ```
 
