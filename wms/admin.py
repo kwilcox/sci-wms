@@ -24,7 +24,7 @@ Created on Sep 6, 2011
 #import fvcom_compute.wms.grid_init_script as gridinit
 from django.contrib import admin
 #from django.db import models
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
+from wms.models import Dataset, Server, Group, VirtualLayer
 
 
 class DatasetAdmin(admin.ModelAdmin):

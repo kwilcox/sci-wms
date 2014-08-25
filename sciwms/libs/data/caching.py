@@ -32,7 +32,7 @@ import logging
 import traceback
 from datetime import datetime
 import numpy as np
-from sciwms.apps.wms.models import Dataset
+from wms.models import Dataset
 from sciwms.libs.data import build_tree
 import multiprocessing
 from collections import deque
@@ -323,15 +323,6 @@ def create_topology_old(dataset_name, url, lat_var='lat', lon_var='lon'):
     finally:
         nclocal.close()
         nc.close()
-
-
-def create_topology_from_config():
-    """
-    Initialize topology upon server start up for each of the datasets listed in LOCALDATASETPATH dictionary
-    """
-    for dataset in Dataset.objects.all():
-        print "Adding: " + dataset["name"]
-        create_topology(dataset["name"], dataset["uri"])
 
 
 def update_datasets():

@@ -63,8 +63,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 
 from sciwms.libs.data import cgrid, ugrid
-import sciwms.apps.wms.wms_requests as wms_reqs
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
+import wms.wms_requests as wms_reqs
+from wms.models import Dataset, Server, Group, VirtualLayer
 from sciwms.util import cf
 
 import pyugrid
@@ -113,7 +113,7 @@ def grouptest(request, group):
     group = Group.objects.get(name=group)
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : list(Dataset.objects.filter(group=group))})
-    return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
+    return HttpResponse(get_template('wms_openlayers_test.html').render(dict1))
 
 
 def groups(request, group):
@@ -133,7 +133,7 @@ def groups(request, group):
                     # Used in template to linkify to URI
                     dataset.online = True
             context = { "datasets" : datasets }
-            return dshorts.render_to_response('wms/index.html', context)
+            return dshorts.render_to_response('index.html', context)
     if reqtype.lower() == "getcapabilities":  # Do GetCapabilities
         group = Group.objects.get(name=group)
         caps = wms_reqs.groupGetCapabilities(request, group, logger)
@@ -159,11 +159,11 @@ def index(request):
             # Used in template to linkify to URI
             dataset.online = True
     context = { "datasets" : datasets }
-    return dshorts.render_to_response('wms/index.html', context)
+    return dshorts.render_to_response('index.html', context)
 
 
 def openlayers(request, filepath):
-    return HttpResponse(get_template('wms/openlayers/%s' % filepath, content_type='text'))
+    return HttpResponse(get_template('openlayers/%s' % filepath, content_type='text'))
 
 
 def simpleclient(request):
@@ -172,7 +172,7 @@ def simpleclient(request):
     sites = Site.objects.values()
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : Dataset.objects.values()})
-    return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
+    return HttpResponse(get_template('wms_openlayers_test.html').render(dict1))
 
 
 def leafletclient(request):
@@ -180,7 +180,7 @@ def leafletclient(request):
     sites = Site.objects.values()
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : Dataset.objects.values()})
-    return HttpResponse(get_template('wms/leaflet_example.html').render(dict1))
+    return HttpResponse(get_template('leaflet_example.html').render(dict1))
 
 
 def authenticate_view(request):
@@ -344,7 +344,7 @@ def wms(request, dataset):
         reqtype = request.GET['request']
         if reqtype.lower() == 'getmap':
             request = database_request_interaction(request, dataset)
-            import sciwms.apps.wms.wms_handler as wms
+            import wms.wms_handler as wms
             handler = wms.wms_handler(request)
             action_request = handler.make_action_request(request)
             if action_request is not None:
@@ -820,10 +820,7 @@ def getLegendGraphic(request, dataset):
 
     # direct the service to the dataset
     # make changes to server_local_config.py
-    if settings.LOCALDATASET:
-        url = settings.LOCALDATASETPATH[dataset]
-    else:
-        url = Dataset.objects.get(name=dataset).path()
+    url = Dataset.objects.get(name=dataset).path()
     nc = netCDF4.Dataset(url)
 
     """
@@ -1862,9 +1859,7 @@ def getMap(request, dataset):
         datestart = datetime.datetime.strptime(datestart, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
         datestart = round(netCDF4.date2num(datestart, units=topology.variables['time'].units))  # datetime obj --> netcdf datenum
         time = bisect.bisect_right(times, datestart) - 1
-        if settings.LOCALDATASET:
-            time = [1]
-        elif time == -1:
+        if time == -1:
             time = [0]
         else:
             time = [time]
@@ -1872,9 +1867,7 @@ def getMap(request, dataset):
             dateend = datetime.datetime.strptime( dateend, "%Y-%m-%dT%H:%M:%S" )  # datestr --> datetime obj
             dateend = round(netCDF4.date2num(dateend, units=topology.variables['time'].units))  # datetime obj --> netcdf datenum
             time.append(bisect.bisect_right(times, dateend) - 1)
-            if settings.LOCALDATASET:
-                time[1] = 1
-            elif time[1] == -1:
+            if time[1] == -1:
                 time[1] = 0
             else:
                 time[1] = time[1]
