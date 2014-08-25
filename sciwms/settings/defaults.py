@@ -23,18 +23,11 @@ import os
 WSGI_APPLICATION = "sciwms.wsgi.application"
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-# LOCALDATASET is for testing purposes
-# If LOCALDATASET is populated, the service will use the cached
-# TOPOLOGY for schema/grid information and LOCALDATASETPATH for actual data extraction
-LOCALDATASET     = False
-#LOCALDATASETPATH = {
-#    '30yr_gom3' : "/home/user/Data/FVCOM/gom3_197802.nc",
-#}
+BASE_DIR = os.path.abspath(os.path.join(PROJECT_ROOT, ".."))
 
 
 # Where to store the Topology data?
-TOPOLOGY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "wms", "topology"))
+TOPOLOGY_PATH = os.path.abspath(os.path.join(BASE_DIR, "wms", "topology"))
 if not os.path.exists(TOPOLOGY_PATH):
     os.makedirs(TOPOLOGY_PATH)
 
@@ -56,7 +49,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sci-wms.db"))  # Or path to database file if using sqlite3.
+        'NAME': os.path.abspath(os.path.join(PROJECT_ROOT, "sci-wms.db"))  # Or path to database file if using sqlite3.
     }
 }
 
@@ -88,29 +81,22 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = ''
+MEDIA_URL = '/media/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
-
-COMMON_STATIC_FILES = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common_static"))
-
-# Additional locations of static files
-STATICFILES_DIRS = (
-    COMMON_STATIC_FILES,
-)
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -121,7 +107,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'zicip#n3_j%h&6tkb_p#9p571--=0g)2!-8xpq%dw*)_7uo=dw'
+SECRET_KEY = 'zicip#n3_j%h&6tkb_p#9p571sdfsadfdsa--=0g)2!-8xpq%dw*)_7uo=dw'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -140,10 +126,6 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'sciwms.urls'
 
-TEMPLATE_DIRS = (
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
-)
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -153,7 +135,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'sciwms.apps.wms',
+    'sciwms',
+    'wms',
     'south'
 )
 

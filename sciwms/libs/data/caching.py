@@ -373,15 +373,6 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
         nc.close()
 
 
-def create_topology_from_config():
-    """
-    Initialize topology upon server start up for each of the datasets listed in LOCALDATASETPATH dictionary
-    """
-    for dataset in Dataset.objects.all():
-        print "Adding: " + dataset["name"]
-        create_topology(dataset["name"], dataset["uri"])
-
-
 def update_datasets():
     for d in Dataset.objects.all():
         try:

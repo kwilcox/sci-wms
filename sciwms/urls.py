@@ -31,13 +31,13 @@ urlpatterns = patterns( '',
                         url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
                         url(r'^admin/doc', include('django.contrib.admindocs.urls')),
 
-                        url(r'^index', 'sciwms.apps.wms.views.index', name="index"),
-                        url(r'^$', 'sciwms.apps.wms.views.index', name="index"),
+                        url(r'^index', 'wms.views.index', name="index"),
+                        url(r'^$', 'wms.views.index', name="index"),
 
-                        url(r'^crossdomain\.xml$', 'sciwms.apps.wms.views.crossdomain'),
+                        url(r'^crossdomain\.xml$', 'wms.views.crossdomain'),
 
                         url(r'^wms$', 'django.shortcuts.redirect', {'/wms/'}),
-                        url(r'^wms/', include('sciwms.apps.wms.urls')),
+                        url(r'^wms/', include('wms.urls')),
                     )
 
 # So we don't have to run "collectstatic" in development mode

@@ -30,7 +30,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 import django.contrib.auth.hashers as hashpass
 
-from sciwms.apps.wms.models import Dataset, Group, Server
+from wms.models import Dataset, Group, Server
 
 resource_path = os.path.join(settings.PROJECT_ROOT, 'apps', 'wms', 'resources')
 

@@ -63,5 +63,5 @@ loglevel = "warning"
 
 def on_starting(server):
     sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
-    import sciwms.apps.wms.startup as startup
+    import wms.startup as startup
     startup.run()

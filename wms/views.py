@@ -63,15 +63,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ObjectDoesNotExist
 
 from sciwms.libs.data import cgrid, ugrid
-import sciwms.apps.wms.wms_requests as wms_reqs
-from sciwms.apps.wms.models import Dataset, Server, Group, VirtualLayer
+import wms.wms_requests as wms_reqs
+from wms.models import Dataset, Server, Group, VirtualLayer
 from sciwms.util import cf
 
 import pyugrid
 import numpy as np
 
-from .get_map import getMap
-from .get_feature_info import getFeatureInfo
+from wms.get_map import getMap
+from wms.get_feature_info import getFeatureInfo
 
 output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
 # Set up Logger
@@ -228,7 +228,7 @@ def grouptest(request, group):
     group = Group.objects.get(name=group)
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : list(Dataset.objects.filter(group=group))})
-    return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
+    return HttpResponse(get_template('wms_openlayers_test.html').render(dict1))
 
 
 def groups(request, group):
@@ -248,7 +248,7 @@ def groups(request, group):
                     # Used in template to linkify to URI
                     dataset.online = True
             context = { "datasets" : datasets }
-            return dshorts.render_to_response('wms/index.html', context)
+            return dshorts.render_to_response('index.html', context)
     if reqtype.lower() == "getcapabilities":  # Do GetCapabilities
         group = Group.objects.get(name=group)
         caps = wms_reqs.groupGetCapabilities(request, group, logger)
@@ -274,11 +274,11 @@ def index(request):
             # Used in template to linkify to URI
             dataset.online = True
     context = { "datasets" : datasets }
-    return dshorts.render_to_response('wms/index.html', context)
+    return dshorts.render_to_response('index.html', context)
 
 
 def openlayers(request, filepath):
-    return HttpResponse(get_template('wms/openlayers/%s' % filepath, content_type='text'))
+    return HttpResponse(get_template('openlayers/%s' % filepath, content_type='text'))
 
 
 def simpleclient(request):
@@ -287,7 +287,7 @@ def simpleclient(request):
     sites = Site.objects.values()
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : Dataset.objects.values()})
-    return HttpResponse(get_template('wms/wms_openlayers_test.html').render(dict1))
+    return HttpResponse(get_template('wms_openlayers_test.html').render(dict1))
 
 
 def leafletclient(request):
@@ -295,7 +295,7 @@ def leafletclient(request):
     sites = Site.objects.values()
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : Dataset.objects.values()})
-    return HttpResponse(get_template('wms/leaflet_example.html').render(dict1))
+    return HttpResponse(get_template('leaflet_example.html').render(dict1))
 
 
 def authenticate_view(request):
@@ -930,10 +930,7 @@ def getLegendGraphic(request, dataset):
 
     # direct the service to the dataset
     # make changes to server_local_config.py
-    if settings.LOCALDATASET:
-        url = settings.LOCALDATASETPATH[dataset]
-    else:
-        url = Dataset.objects.get(name=dataset).path()
+    url = Dataset.objects.get(name=dataset).path()
     nc = netCDF4.Dataset(url)
 
     """
