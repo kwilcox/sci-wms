@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(default='', max_length=200, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'Dataset.topology_type'
         db.delete_column(u'wms_dataset', 'topology_type')
-
 
     models = {
         u'wms.dataset': {

@@ -24,16 +24,17 @@ try:
 except ImportError:
     try:
         import simplejson as json
-    except ImportError, E:
+    except ImportError as E:
         missing_deps = E 
-    
+
 try:
     from BeautifulSoup import BeautifulSoup
-except ImportError, E:
+except ImportError as E:
     missing_deps = E 
 
 feedName = "example-list.xml"
 feedPath = "http://openlayers.org/dev/examples/"
+
 
 def getListOfOnlineExamples(baseUrl):
     """
@@ -46,7 +47,8 @@ def getListOfOnlineExamples(baseUrl):
     examples = [example for example in examples if example.endswith('.html')]
     examples = [example for example in examples]
     return examples
-    
+
+
 def getListOfExamples(relPath):
     """
     returns list of .html filenames within a given path - excludes example-list.html
@@ -54,7 +56,7 @@ def getListOfExamples(relPath):
     examples = os.listdir(relPath)
     examples = [example for example in examples if example.endswith('.html') and example != "example-list.html"]
     return examples
-    
+
 
 def getExampleHtml(location):
     """
@@ -68,8 +70,8 @@ def getExampleHtml(location):
         html = f.read()
         f.close()
         return html
-        
-    
+
+
 def extractById(soup, tagId, value=None):
     """
     returns full contents of a particular tag id
@@ -78,9 +80,10 @@ def extractById(soup, tagId, value=None):
     if beautifulTag:
         if beautifulTag.contents: 
             value = str(beautifulTag.renderContents()).strip()
-            value = value.replace('\t','')
-            value = value.replace('\n','')
+            value = value.replace('\t', '')
+            value = value.replace('\n', '')
     return value
+
 
 def getRelatedClasses(html):
     """
@@ -90,18 +93,20 @@ def getRelatedClasses(html):
     rawstr = r'''(?P<class>OpenLayers\..*?)\('''
     return re.findall(rawstr, html)
 
-def parseHtml(html,ids):
+
+def parseHtml(html, ids):
     """
     returns dictionary of items of interest
     """
     soup = BeautifulSoup(html)
     d = {}
     for tagId in ids:
-        d[tagId] = extractById(soup,tagId)
-    #classes should eventually be parsed from docs - not automatically created.
+        d[tagId] = extractById(soup, tagId)
+    # classes should eventually be parsed from docs - not automatically created.
     classes = getRelatedClasses(html)
     d['classes'] = classes
     return d
+
 
 def getSvnInfo(path):
     h = os.popen("svn info %s --xml" % path)
@@ -113,7 +118,8 @@ def getSvnInfo(path):
         'date': tree.findtext('entry/commit/date')
     }
     return d
-    
+
+
 def createFeed(examples):
     doc = Document()
     atomuri = "http://www.w3.org/2005/Atom"
@@ -125,55 +131,56 @@ def createFeed(examples):
     link = doc.createElementNS(atomuri, "link")
     link.setAttribute("rel", "self")
     link.setAttribute("href", feedPath + feedName)
-    
+
     modtime = time.strftime("%Y-%m-%dT%I:%M:%SZ", time.gmtime())
     id = doc.createElementNS(atomuri, "id")
     id.appendChild(doc.createTextNode("%s%s#%s" % (feedPath, feedName, modtime)))
     feed.appendChild(id)
-    
+
     updated = doc.createElementNS(atomuri, "updated")
     updated.appendChild(doc.createTextNode(modtime))
     feed.appendChild(updated)
 
-    examples.sort(key=lambda x:x["modified"])
-    for example in sorted(examples, key=lambda x:x["modified"], reverse=True):
+    examples.sort(key=lambda x: x["modified"])
+    for example in sorted(examples, key=lambda x: x["modified"], reverse=True):
         entry = doc.createElementNS(atomuri, "entry")
-        
+
         title = doc.createElementNS(atomuri, "title")
         title.appendChild(doc.createTextNode(example["title"] or example["example"]))
         entry.appendChild(title)
-              
+
         tags = doc.createElementNS(atomuri, "tags")
         tags.appendChild(doc.createTextNode(example["tags"] or example["example"]))
         entry.appendChild(tags)
-        
+
         link = doc.createElementNS(atomuri, "link")
         link.setAttribute("href", "%s%s" % (feedPath, example["example"]))
         entry.appendChild(link)
-    
+
         summary = doc.createElementNS(atomuri, "summary")
         summary.appendChild(doc.createTextNode(example["shortdesc"] or example["example"]))
         entry.appendChild(summary)
-        
+
         updated = doc.createElementNS(atomuri, "updated")
         updated.appendChild(doc.createTextNode(example["modified"]))
         entry.appendChild(updated)
-        
+
         author = doc.createElementNS(atomuri, "author")
         name = doc.createElementNS(atomuri, "name")
         name.appendChild(doc.createTextNode(example["author"]))
         author.appendChild(name)
         entry.appendChild(author)
-        
+
         id = doc.createElementNS(atomuri, "id")
         id.appendChild(doc.createTextNode("%s%s#%s" % (feedPath, example["example"], example["modified"])))
         entry.appendChild(id)
-        
+
         feed.appendChild(entry)
 
     doc.appendChild(feed)
     return doc    
-    
+
+
 def wordIndex(examples):
     """
     Create an inverted index based on words in title and shortdesc.  Keys are
@@ -191,33 +198,33 @@ def wordIndex(examples):
                 for word in words:
                     if word:
                         word = word.lower()
-                        if index.has_key(word):
-                            if index[word].has_key(i):
+                        if word in index:
+                            if i in index[word]:
                                 index[word][i] += 1
                             else:
                                 index[word][i] = 1
                         else:
                             index[word] = {i: 1}
     return index
-    
+
 if __name__ == "__main__":
 
     if missing_deps:
         print "This script requires json or simplejson and BeautifulSoup. You don't have them. \n(%s)" % E
         sys.exit()
-    
+
     if len(sys.argv) > 1:
-        outFile = open(sys.argv[1],'w')
+        outFile = open(sys.argv[1], 'w')
     else:
-        outFile = open('../examples/example-list.js','w')
-    
+        outFile = open('../examples/example-list.js', 'w')
+
     examplesLocation = '../examples'
     print 'Reading examples from %s and writing out to %s' % (examplesLocation, outFile.name)
-   
+
     exampleList = []
-    docIds = ['title','shortdesc','tags']
-   
-    #comment out option to create docs from online resource
+    docIds = ['title', 'shortdesc', 'tags']
+
+    # comment out option to create docs from online resource
     #examplesLocation = 'http://svn.openlayers.org/sandbox/docs/examples/'
     #examples = getListOfOnlineExamples(examplesLocation)
 
@@ -226,9 +233,9 @@ if __name__ == "__main__":
     modtime = time.strftime("%Y-%m-%dT%I:%M:%SZ", time.gmtime())
 
     for example in examples:
-        url = os.path.join(examplesLocation,example)
+        url = os.path.join(examplesLocation, example)
         html = getExampleHtml(url)
-        tagvalues = parseHtml(html,docIds)
+        tagvalues = parseHtml(html, docIds)
         tagvalues['example'] = example
         # add in svn info
         d = getSvnInfo(url)
@@ -237,15 +244,15 @@ if __name__ == "__main__":
         tagvalues['link'] = example
 
         exampleList.append(tagvalues)
-        
+
     print
-    
-    exampleList.sort(key=lambda x:x['example'].lower())
-    
+
+    exampleList.sort(key=lambda x: x['example'].lower())
+
     index = wordIndex(exampleList)
 
     json = json.dumps({"examples": exampleList, "index": index})
-    #give the json a global variable we can use in our js.  This should be replaced or made optional.
+    # give the json a global variable we can use in our js.  This should be replaced or made optional.
     json = 'var info=' + json 
     outFile.write(json)
     outFile.close()
@@ -256,7 +263,4 @@ if __name__ == "__main__":
     atom.write(doc.toxml())
     atom.close()
 
-
     print 'complete'
-
-    

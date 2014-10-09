@@ -30,12 +30,14 @@ from django.conf import settings
 import logging
 logger = logging.getLogger('wms')
 
+
 def get_bbox(request):
     """
     Return the [lonmin, latmin, lonmax, lonmax] - [lower (x,y), upper(x,y)]
     Units will be specified by projection.
     """
     return [float(el) for el in request.GET["bbox"].split(",")]
+
 
 def get_projection_string(request):
     """
@@ -53,6 +55,7 @@ def get_projection_string(request):
 
     return projstr
 
+
 def get_xy(request):
     """
     Returns list of floats
@@ -67,11 +70,13 @@ def get_xy(request):
 
     return xy
 
+
 def get_layers(request):
     """
     Returns a list of strings
     """
     return request.GET.get("LAYERS").split(",")
+
 
 def get_elevation(request):
     """
@@ -85,6 +90,7 @@ def get_elevation(request):
         return "0"
 
     return elev
+
 
 def get_date_start_end(request):
     time = request.GET.get('time')
@@ -119,12 +125,14 @@ def get_date_start_end(request):
 
     return timestart, timeend
 
+
 def get_style_list(request):
     try:
         return request.GET["styles"].split(",")[0].split("_")
     except:
         return []
-    
+
+
 def get_colormap(request):
     """
     Return style string from a list of styles
@@ -133,18 +141,20 @@ def get_colormap(request):
     try:
         styles = get_style_list(request)
         if styles:
-            return styles[2].replace("-","_")
+            return styles[2].replace("-", "_")
         return "jet"
     except:
         logger.debug("Using default colormap (jet)")
         return "jet"
 
+
 def get_climits(request):
     styles = get_style_list(request)
     if styles:
-        return np.array(styles[3:5],dtype=np.float)
+        return np.array(styles[3:5], dtype=np.float)
     else:
         return []
+
 
 def get_clvls(request):
     try:
@@ -153,13 +163,14 @@ def get_clvls(request):
     except:
         logger.debug("Using default clvls (15)")
         return 15
-    
+
 # def get_topology_type(request):
 #     styles = get_style_list(request)
 #     if styles:
 #         return styles[5]
 #     else:
 #         return None
+
 
 def get_elevation(request):
     """
@@ -169,6 +180,7 @@ def get_elevation(request):
         return float(request.GET["ELEVATION"])
     except:
         return 0
+
 
 def get_width_height(request):
     """
@@ -181,6 +193,7 @@ def get_width_height(request):
         return width, height
     except:
         return []
+
 
 def get_magnitude_bool(styles):
     styles = get_style_list(request)

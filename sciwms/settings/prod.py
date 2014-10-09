@@ -56,7 +56,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'backupCount': 5,
-            'maxBytes': 1024*1024*20,  # 20MB
+            'maxBytes': 1024 * 1024 * 20,  # 20MB
             'filename': os.path.join(BASE_DIR, 'logs', 'sciwms.log'),
             'formatter': 'verbose'
         },

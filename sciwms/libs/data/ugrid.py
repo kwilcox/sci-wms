@@ -17,8 +17,9 @@ This file is part of SCI-WMS.
     along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-#ugrid
-import os, sys
+# ugrid
+import os
+import sys
 import numpy as np
 from matplotlib.pylab import get_cmap
 from matplotlib.collections import PolyCollection
@@ -29,7 +30,9 @@ from django.conf import settings
 
 from .caching import FastRtree
 
+
 class Ugrid(object):
+
     def __init__(dataset_name):
         self._name = dataset_name
         rtree_cache_file = os.path.join(settings.TOPOLOGY_PATH, self._name)
@@ -42,25 +45,29 @@ class Ugrid(object):
         """
         return [n.object for n in self._rtree.intersection((latmin, lonmin, latmax, lonmax), objects=True)]
 
+
 def subset(latmin, lonmin, latmax, lonmax, lat, lon):
     index = np.asarray(np.where(
-        (lat <= latmax+.18) & (lat >= latmin-.18) &
-        (lon <= lonmax+.18) & (lon >= lonmin-.18),)).squeeze()
+        (lat <= latmax + .18) & (lat >= latmin - .18) &
+        (lon <= lonmax + .18) & (lon >= lonmin - .18),)).squeeze()
     lat = lat[index]
     lon = lon[index]
     if not len(index) > 0:
         index = None
     return index, lat, lon
 
+
 def get_nodes(topology):
     latn = topology.variables['lat'][:]
     lonn = topology.variables['lon'][:]
     return latn, lonn
 
+
 def get_topologyarray(topology, index):
-    nvtemp = topology.variables['nv'][:,:]
-    nv = nvtemp[:,index].T-1 # Convert to 0 based indexing TODO:convert in the topology generation
+    nvtemp = topology.variables['nv'][:, :]
+    nv = nvtemp[:, index].T - 1  # Convert to 0 based indexing TODO:convert in the topology generation
     return nv
+
 
 def varfromnc(nc, t, layer, var):
     if len(nc.variables[var].shape) == 3:
@@ -70,9 +77,10 @@ def varfromnc(nc, t, layer, var):
     elif len(nc.variables[var].shape) == 1:
         return nc.variables[var][:]
 
+
 def getvar(datasetnc, t, layer, variables, index):
     special_function = ""
-    #print index
+    # print index
     if index is None:
         var1 = None
         var2 = None
@@ -80,7 +88,7 @@ def getvar(datasetnc, t, layer, variables, index):
         if "+" in variables[0]:
             variables = variables[0].split("+")
             special_function = "+"
-        var1 = varfromnc(datasetnc , t, layer, variables[0])
+        var1 = varfromnc(datasetnc, t, layer, variables[0])
         if len(variables) > 1:
             var2 = varfromnc(datasetnc, t, layer, variables[1])
         if len(var1.shape) > 2:
@@ -104,21 +112,22 @@ def getvar(datasetnc, t, layer, variables, index):
         else:
             var1, var2 = None, None
         if special_function == "+":
-            #var1[np.isnan(var2)] = np.nan # shouldnt be necessary in ...
+            # var1[np.isnan(var2)] = np.nan # shouldnt be necessary in ...
             #var2[np.isnan(var1)] = np.nan
             var1 = var1 + var2
             var2 = None
-        if var1 != None:
+        if var1 is not None:
             ncvar1 = datasetnc.variables[variables[0]]
             if "additional_fill_values" in ncvar1.ncattrs():
                 for fillval in map(float, ncvar1.additional_fill_values.split(",")):
-                    var1[var1==fillval] = np.nan
-        if var2 != None:
+                    var1[var1 == fillval] = np.nan
+        if var2 is not None:
             ncvar2 = datasetnc.variables[variables[1]]
             if "additional_fill_values" in ncvar2.ncattrs():
                 for fillval in map(float, ncvar2.additional_fill_values.split(",")):
-                    var2[var2==fillval] = np.nan
+                    var2[var2 == fillval] = np.nan
     return var1, var2
+
 
 def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
     patch1 = None
@@ -131,11 +140,11 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
     cmax = kwargs.get('cmax', "None")
     magnitude = kwargs.get('magnitude', "False")
     topology_type = kwargs.get('topology_type', 'node')
-    fig.set_figheight(height/80.0)
-    fig.set_figwidth(width/80.0)
+    fig.set_figheight(height / 80.0)
+    fig.set_figwidth(width / 80.0)
     if var1 is not None:
         if var2 is not None:
-            mag = np.sqrt(var1**2 + var2**2)
+            mag = np.sqrt(var1 ** 2 + var2 ** 2)
         else:
             if magnitude == "True":
                 mag = np.abs(var1)
@@ -148,7 +157,7 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
             vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type)
         elif "unitvectors" in actions:
             unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type)
-        #elif "streamlines" in actions:
+        # elif "streamlines" in actions:
         #    streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type)
         elif "barbs" in actions:
             barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, magnitude, topology_type)
@@ -168,6 +177,7 @@ def plot(lon, lat, lonn, latn, nv, var1, var2, actions, m, ax, fig, **kwargs):
                 fig, m = contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection)
     return fig, m
 
+
 def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
     from matplotlib.mlab import griddata
     if topology_type.lower() == "cell":
@@ -176,7 +186,7 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig,
     else:
         lon, lat = m(lonn, latn)
         lonn, latn = lon, lat
-    num = int( (lonmax - lonmin) *  320 )
+    num = int( (lonmax - lonmin) * 320 )
     xi = np.arange(m.xmin, m.xmax, num)
     yi = np.arange(m.ymin, m.ymax, num)
     if topology_type.lower() == "node":
@@ -192,14 +202,15 @@ def pcolor(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmap, topology_type, fig,
 
     #from matplotlib.backends.backend_agg import FigureCanvasAgg
     #canvas = FigureCanvasAgg(fig)
-    #canvas.print_png("testing_yay.png")
+    # canvas.print_png("testing_yay.png")
     return fig, m
+
 
 def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
     if (cmin == "None") or (cmax == "None"):
         levs = None
     else:
-        levs = np.arange(0, 12)*(cmax-cmin)/10
+        levs = np.arange(0, 12) * (cmax - cmin) / 10
     if topology_type.lower() == 'cell':
         lon, lat = m(lon, lat)
         trid = Tri.Triangulation(lon, lat)
@@ -211,11 +222,12 @@ def contour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topolo
         m.ax.tricontour(tri, mag, norm=norm, levels=levs, antialiased=True, linewidth=2, cmap=get_cmap(cmap))
     return fig, m
 
+
 def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, fig, height, width, lonmin, latmin, lonmax, latmax, dataset, continuous, projection):
     if (cmin == "None") or (cmax == "None"):
         levs = None
     else:
-        levs = np.arange(1, 12)*(cmax-cmin)/10
+        levs = np.arange(1, 12) * (cmax - cmin) / 10
         levs = np.hstack(([-99999], levs, [99999]))
     if topology_type.lower() == 'cell':
         lon, lat = m(lon, lat)
@@ -228,20 +240,21 @@ def fcontour(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topol
         m.ax.tricontourf(tri, mag, norm=norm, levels=levs, antialiased=False, linewidth=0, cmap=get_cmap(cmap))
     return fig, m
 
+
 def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology_type, kwargs):
     lonn, latn = m(lonn, latn)
-    tri = Tri.Triangulation(lonn,latn,triangles=nv)
+    tri = Tri.Triangulation(lonn, latn, triangles=nv)
     if topology_type.lower() == 'cell':
-        ## Uncomment this code if using matplotlib < 1.2.x
-        #verts = np.concatenate((tri.x[tri.triangles][...,np.newaxis],\
+        # Uncomment this code if using matplotlib < 1.2.x
+        # verts = np.concatenate((tri.x[tri.triangles][...,np.newaxis],\
         #                        tri.y[tri.triangles][...,np.newaxis]), axis=2)
-        #collection = PolyCollection(verts,
+        # collection = PolyCollection(verts,
         #                            cmap=cmap,
         #                            norm=norm,
         #                            )
-        #collection.set_array(mag)
-        #collection.set_edgecolor('none')
-        #m.ax.add_collection(collection)
+        # collection.set_array(mag)
+        # collection.set_edgecolor('none')
+        # m.ax.add_collection(collection)
         m.ax.tripcolor(tri, facecolors=mag,
                        shading="",
                        norm=norm,
@@ -253,6 +266,7 @@ def facet(lon, lat, lonn, latn, mag, nv, m, ax, norm, cmin, cmax, cmap, topology
                        norm=norm,
                        cmap=cmap,
                        )
+
 
 def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
@@ -271,24 +285,25 @@ def vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnit
     if topology_type.lower() == 'node':
         n = np.unique(nv)
         m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n],
-            pivot='mid',
-            units='xy', #xy
-            cmap=cmap,
-            norm=norm,
-            minlength=.5,
-            scale=arrowsize,
-            scale_units='inches',
+                 pivot='mid',
+                 units='xy',  # xy
+                 cmap=cmap,
+                 norm=norm,
+                 minlength=.5,
+                 scale=arrowsize,
+                 scale_units='inches',
             )
     else:
         m.quiver(lon, lat, var1, var2, mag,
-            pivot='mid',
-            units='xy', #xy
-            cmap=cmap,
-            norm=norm,
-            minlength=.5,
-            scale=arrowsize,
-            scale_units='inches',
+                 pivot='mid',
+                 units='xy',  # xy
+                 cmap=cmap,
+                 norm=norm,
+                 minlength=.5,
+                 scale=arrowsize,
+                 scale_units='inches',
             )
+
 
 def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
@@ -304,30 +319,31 @@ def unit_vectors(lon, lat, lonn, latn, var1, var2, mag, nv, m, ax, norm, cmap, m
     else:
         lon, lat = lonn, latn
     lon, lat = m(lon, lat)
-    theta = np.degrees(np.arctan(var2/var1))
-    var1 = np.cos(np.radians(theta))# u
-    var2 = np.sin(np.radians(theta))# v
+    theta = np.degrees(np.arctan(var2 / var1))
+    var1 = np.cos(np.radians(theta))  # u
+    var2 = np.sin(np.radians(theta))  # v
     if topology_type.lower() == 'node':
         n = np.unique(nv)
         m.quiver(lon[n], lat[n], var1[n], var2[n], mag[n],
-            pivot='mid',
-            units='xy', #xy
-            cmap=cmap,
-            norm=norm,
-            minlength=.5,
-            scale=arrowsize,
-            scale_units='inches',
+                 pivot='mid',
+                 units='xy',  # xy
+                 cmap=cmap,
+                 norm=norm,
+                 minlength=.5,
+                 scale=arrowsize,
+                 scale_units='inches',
             )
     else:
         m.quiver(lon, lat, var1, var2, mag,
-            pivot='mid',
-            units='xy', #xy
-            cmap=cmap,
-            norm=norm,
-            minlength=.5,
-            scale=arrowsize,
-            scale_units='inches',
+                 pivot='mid',
+                 units='xy',  # xy
+                 cmap=cmap,
+                 norm=norm,
+                 minlength=.5,
+                 scale=arrowsize,
+                 scale_units='inches',
             )
+
 
 def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnitude, topology_type):
     if magnitude == "True":
@@ -346,19 +362,20 @@ def streamlines(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmap, magnit
     lon, lat = m(lon, lat)
     if topology_type.lower() == 'node':
         n = np.unique(nv)
-        ax.streamplot(lon[n], lat[n], var1[n], var2[n], #color=mag[n],
-            density=6,
-            #linewidth=5*mag/mag.max(),
-            cmap=cmap,
-            norm=norm,
+        ax.streamplot(lon[n], lat[n], var1[n], var2[n],  # color=mag[n],
+                      density=6,
+                      # linewidth=5*mag/mag.max(),
+                      cmap=cmap,
+                      norm=norm,
             )
     else:
-        ax.streamplot(lon, lat, var1, var2, #color=mag.T,
-            density=6,
-            #linewidth=5*mag/mag.max(),
-            cmap=cmap,
-            norm=norm,
+        ax.streamplot(lon, lat, var1, var2,  # color=mag.T,
+                      density=6,
+                      # linewidth=5*mag/mag.max(),
+                      cmap=cmap,
+                      norm=norm,
             )
+
 
 def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, magnitude, topology_type):
     if magnitude == "True":
@@ -370,8 +387,8 @@ def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, 
     else:
         arrowsize = float(magnitude)
     if (cmin == "None") or (cmax == "None"):
-        full = 10.#.2
-        flag = 50.#1.
+        full = 10.  # .2
+        flag = 50.  # 1.
     else:
         full = cmin
         flag = cmax
@@ -383,46 +400,50 @@ def barbs(lon, lat, lonn, latn, var1, var2, mag, m, ax, norm, cmin, cmax, cmap, 
     if topology_type.lower() == 'node':
         n = np.unique(nv)
         m.ax.barbs(lon[n], lat[n], var1[n], var2[n], mag[n],
-            length=4.5,
-            pivot='middle',
-            barb_increments=dict(half=full/2., full=full, flag=flag),
-            #units='xy',
-            cmap=cmap,
-            norm=norm,
-            #clim=climits,
-            linewidth=1.2,
-            sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
-            #antialiased=True,
+                   length=4.5,
+                   pivot='middle',
+                   barb_increments=dict(half=full / 2., full=full, flag=flag),
+                   # units='xy',
+                   cmap=cmap,
+                   norm=norm,
+                   # clim=climits,
+                   linewidth=1.2,
+                   sizes=dict(emptybarb=0.2, spacing=0.14, height=0.5),
+                   # antialiased=True,
             )
     else:
         m.ax.barbs(lon, lat, var1, var2, mag,
-            length=4.5,
-            pivot='middle',
-            barb_increments=dict(half=full/2., full=full, flag=flag),
-            #units='xy',
-            cmap=cmap,
-            norm=norm,
-            #clim=climits,
-            linewidth=1.2,
-            sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
-            #antialiased=True,
+                   length=4.5,
+                   pivot='middle',
+                   barb_increments=dict(half=full / 2., full=full, flag=flag),
+                   # units='xy',
+                   cmap=cmap,
+                   norm=norm,
+                   # clim=climits,
+                   linewidth=1.2,
+                   sizes=dict(emptybarb=0.2, spacing=.14, height=0.5),
+                   # antialiased=True,
             )
 
 # Utility functions to aid in pcolor, and contouring styles
+
+
 def correct_continuous(x, continuous, lonmin, latmin, lonmax, latmax):
     if continuous is True:
         if lonmin < 0:
             x[np.where(x > 0)] = x[np.where(x > 0)] - 360
-            x[np.where(x < lonmax-359)] = x[np.where(x < lonmax-359)] + 360
+            x[np.where(x < lonmax - 359)] = x[np.where(x < lonmax - 359)] + 360
         else:
-            x[np.where(x < lonmax-359)] = x[np.where(x < lonmax-359)] + 360
+            x[np.where(x < lonmax - 359)] = x[np.where(x < lonmax - 359)] + 360
     return x
 
+
 def create_path_codes(x):
-    allcodes = np.ones(len(x),dtype=mpath.Path.code_type) * mpath.Path.LINETO
+    allcodes = np.ones(len(x), dtype=mpath.Path.code_type) * mpath.Path.LINETO
     allcodes[0] = mpath.Path.MOVETO
     allcodes[-1] = mpath.Path.CLOSEPOLY
     return allcodes
+
 
 def add_path_codes(holex, allcodes):
     newcodes  = np.ones(len(holex), dtype=mpath.Path.code_type) * mpath.Path.LINETO
@@ -430,6 +451,7 @@ def add_path_codes(holex, allcodes):
     newcodes[-1] = mpath.Path.CLOSEPOLY
     allcodes = np.concatenate((allcodes, newcodes))
     return allcodes
+
 
 def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
     import shapely.geometry
@@ -448,7 +470,7 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
                                                  shapely.geometry.box(0, latmin, lonmax, latmax)))
         else:
             box = shapely.geometry.MultiPolygon((shapely.geometry.box(lonmin, latmin, 180, latmax),
-                                                 shapely.geometry.box(-180, latmin, lonmax-360, latmax)))
+                                                 shapely.geometry.box(-180, latmin, lonmax - 360, latmax)))
     else:
         box = shapely.geometry.box(lonmin, latmin, lonmax, latmax)
 
@@ -510,6 +532,7 @@ def get_domain_as_patch(dataset, m, lonmin, latmin, lonmax, latmax, continuous):
 
     return p
 
+
 def prepare_axes(m, lonmin, latmin, lonmax, latmax):
     lonmax1, latmax1 = m(lonmax, latmax)
     lonmin1, latmin1 = m(lonmin, latmin)
@@ -517,7 +540,8 @@ def prepare_axes(m, lonmin, latmin, lonmax, latmax):
     m.ax.set_ylim(latmin1, latmax1)
     m.ax.set_frame_on(False)
     m.ax.set_clip_on(False)
-    m.ax.set_position([0,0,1,1])
+    m.ax.set_position([0, 0, 1, 1])
+
 
 def create_projected_fig(lonmin, latmin, lonmax, latmax, projection, height, width):
     from mpl_toolkits.basemap import Basemap
@@ -527,12 +551,13 @@ def create_projected_fig(lonmin, latmin, lonmax, latmax, projection, height, wid
     fig.set_figheight(height)
     fig.set_figwidth(width)
     m = Basemap(llcrnrlon=lonmin, llcrnrlat=latmin,
-            urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
-            resolution=None,
-            lat_ts = 0.0,
-            suppress_ticks=True)
+                urcrnrlon=lonmax, urcrnrlat=latmax, projection=projection,
+                resolution=None,
+                lat_ts = 0.0,
+                suppress_ticks=True)
     m.ax = fig.add_axes([0, 0, 1, 1], xticks=[], yticks=[])
     return fig, m
+
 
 def figure2array(fig):
     from StringIO import StringIO as StringIO
@@ -572,4 +597,4 @@ def cookie_cutter(dataset, fig, m, lonmin, latmin, lonmax, latmax, projection, c
         # 'p' was None:
         patch1 = None
     finally:
-        return fig, m, patch1 # Return a new fig instance
+        return fig, m, patch1  # Return a new fig instance

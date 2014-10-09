@@ -83,6 +83,7 @@ def add_user():
 
 
 class SimpleTest(TestCase):
+
     def test_basic_addition(self):
         """
         Tests that 1 + 1 always equals 2.
@@ -96,23 +97,25 @@ class SimpleTest(TestCase):
 
 
 class TestUgrid(TestCase):
+
     """
     http://wms.glos.us:8080/wms/SLRFVM_Latest_Forecast/?LAYERS=u%2Cv&TRANSPARENT=TRUE&STYLES=facets_average_jet_None_None_cell_False&TIME=&ELEVATION=0&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&SRS=EPSG%3A3857&BBOX=-8543030.3273202,5492519.0747705,-8401010.3287862,5542356.0172055&WIDTH=929&HEIGHT=326
     """
+
     def test_add_server(self):
         add_server()
 
     def test_add_group(self):
         add_group()
 
-    #def test_post_add(self):
+    # def test_post_add(self):
     #    post_add(self, "201220109.nc")
 
     def test_add_dataset(self):
         add_dataset("201220109.nc")
 
     def test_web_remove(self):
-        #auth_headers = { 'HTTP_AUTHORIZATION':
+        # auth_headers = { 'HTTP_AUTHORIZATION':
         #                 'Basic ' + base64.b64encode('testuser:test')}
         add_server()
         add_group()
@@ -174,12 +177,12 @@ class TestCgrid(TestCase):
     def test_add_dataset(self):
         add_dataset("nasa_scb20111015.nc")
 
-    #def test_post_add(self):
+    # def test_post_add(self):
     #    post_add(self, "nasa_scb20111015.nc")
 
     def test_web_remove(self):
         #import base64
-        #auth_headers = { 'HTTP_AUTHORIZATION':
+        # auth_headers = { 'HTTP_AUTHORIZATION':
         #                 'Basic ' + base64.b64encode('testuser:test')}
         add_server()
         add_group()
@@ -222,6 +225,6 @@ class TestCgrid(TestCase):
         self.assertEqual(response.status_code, 200)
         d.clear_cache()
 
-#class TestDap(TestCase):
-    #def test_post_add(self):
+# class TestDap(TestCase):
+    # def test_post_add(self):
     #    post_add(self, "http://tds.glos.us:8080/thredds/dodsC/glos/glcfs/michigan/fcfmrc-2d/Lake_Michigan_-_2D_best.ncd")

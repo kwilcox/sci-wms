@@ -11,7 +11,8 @@ content type. It supports GET and POST requests."""
 
 import urllib2
 import cgi
-import sys, os
+import sys
+import os
 
 # Designed to prevent Open Proxy type stuff.
 
@@ -28,7 +29,7 @@ method = os.environ["REQUEST_METHOD"]
 if method == "POST":
     qs = os.environ["QUERY_STRING"]
     d = cgi.parse_qs(qs)
-    if d.has_key("url"):
+    if "url" in d:
         url = d["url"][0]
     else:
         url = "http://www.openlayers.org"
@@ -45,9 +46,9 @@ try:
         print "This proxy does not allow you to access that location (%s)." % (host,)
         print
         print os.environ
-  
+
     elif url.startswith("http://") or url.startswith("https://"):
-    
+
         if method == "POST":
             length = int(os.environ["CONTENT_LENGTH"])
             headers = {"Content-Type": os.environ["CONTENT_TYPE"]}
@@ -56,24 +57,24 @@ try:
             y = urllib2.urlopen(r)
         else:
             y = urllib2.urlopen(url)
-        
+
         # print content type header
         i = y.info()
-        if i.has_key("Content-Type"):
+        if "Content-Type" in i:
             print "Content-Type: %s" % (i["Content-Type"])
         else:
             print "Content-Type: text/plain"
         print
-        
+
         print y.read()
-        
+
         y.close()
     else:
         print "Content-Type: text/plain"
         print
         print "Illegal request."
 
-except Exception, E:
+except Exception as E:
     print "Status: 500 Unexpected Error"
     print "Content-Type: text/plain"
     print 

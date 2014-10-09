@@ -24,6 +24,7 @@ import numpy
 import shapely.geometry as geometry
 import pp
 
+
 def regrid(trivals, trilon, trilat, topology, reglon, reglat, size):
     #import pprocess
     ppservers = ()
@@ -41,7 +42,8 @@ def regrid(trivals, trilon, trilat, topology, reglon, reglat, size):
             sareas = findVolumesList(supergrid)
             matched = [trivals[match] for match in matches]
             newvalue = getNewCellValue(new, matched, 5, sareas)
-        else: newvalue = -9999
+        else:
+            newvalue = -9999
         return newvalue
 
     tri = createPolygonList(trilon, trilat, topology)
@@ -50,20 +52,21 @@ def regrid(trivals, trilon, trilat, topology, reglon, reglat, size):
     job_server = pp.Server(20, ppservers=ppservers)
     parallel = []
     for i in range(len(reglon)):
-        parallel.append(job_server.submit(newvalues, (reglon[i], reglat[-(i+1)], size, tri, trivals),
-                                      (createNewCell, searchForIntersect, createIntersections,
-                                       findDistancesList, getCentroid, findVolumesList,
-                                       getNewCellValue, haversine), ("shapely.geometry as geometry", "numpy",)))
+        parallel.append(job_server.submit(newvalues, (reglon[i], reglat[-(i + 1)], size, tri, trivals),
+                                          (createNewCell, searchForIntersect, createIntersections,
+                                           findDistancesList, getCentroid, findVolumesList,
+                                           getNewCellValue, haversine), ("shapely.geometry as geometry", "numpy",)))
 
     ##parallel = [newvalues(reglon[i], reglat[i], size, tri, trivals) for i in range(len(reglon))]
     parallel = [i() for i in parallel]
     return parallel
 
+
 def createNewCell(lon, lat, size):
-    newcell = geometry.Polygon(((lon+(size/2), lat+(size/2)),
-                      (lon+(size/2), lat-(size/2)),
-                      (lon-(size/2), lat-(size/2)),
-                      (lon-(size/2), lat+(size/2))))
+    newcell = geometry.Polygon(((lon + (size / 2), lat + (size / 2)),
+                                (lon + (size / 2), lat - (size / 2)),
+                                (lon - (size / 2), lat - (size / 2)),
+                                (lon - (size / 2), lat + (size / 2))))
     return newcell
 
 
@@ -71,20 +74,21 @@ def createPolygonList(lon, lat, topology):
     '''
     Create a list of polygons from input unstructured topology array
     '''
-    #def seq(a, lon, lat):
+    # def seq(a, lon, lat):
     #    return numpy.asarray((lon[a[0]], lat[a[0]]),
     #            (lon[a[1]], lat[a[1]]),
     #            (lon[a[2]], lat[a[2]]))
     #ringsequence = numpy.apply_along_axis(seq, 0, topology, lon, lat)
     polygons = []
-    for i in range(len(topology[:,1])):
-        polygon = geometry.Polygon(((lon[topology[i,0]],lat[topology[i,0]]),
-                                   (lon[topology[i,1]],lat[topology[i,1]]),
-                                   (lon[topology[i,2]],lat[topology[i,2]])))
+    for i in range(len(topology[:, 1])):
+        polygon = geometry.Polygon(((lon[topology[i, 0]], lat[topology[i, 0]]),
+                                    (lon[topology[i, 1]], lat[topology[i, 1]]),
+                                    (lon[topology[i, 2]], lat[topology[i, 2]])))
         polygons.append(polygon)
 
     #polygons = map(geometry.Polygon, ringsequence)
     return polygons
+
 
 def searchForIntersect(polygonlist, newcell):
     '''
@@ -94,9 +98,9 @@ def searchForIntersect(polygonlist, newcell):
     def all_indices(value, qlist):
         indices = []
         idx = -1
-        while 1:
+        while True:
             try:
-                idx = qlist.index(value, idx+1)
+                idx = qlist.index(value, idx + 1)
                 indices.append(idx)
             except ValueError:
                 break
@@ -104,6 +108,7 @@ def searchForIntersect(polygonlist, newcell):
     isintersect = [polygon.intersects(newcell) for polygon in polygonlist]
     intersection_indices = all_indices(True, isintersect)
     return intersection_indices
+
 
 def createIntersections(polygons, intersections, newcell):
     '''
@@ -113,6 +118,7 @@ def createIntersections(polygons, intersections, newcell):
     polygons = [polygons[i] for i in intersections]
     supergrid = [polygon.intersection(newcell) for polygon in polygons]
     return supergrid
+
 
 def findDistancesList(original_centroids, supergrid_centroids):
     '''
@@ -126,6 +132,7 @@ def findDistancesList(original_centroids, supergrid_centroids):
                 [s.x for s in supergrid_centroids])
     return dists
 
+
 def findVolumesList(polygons):
     '''
     Return the calculated areas of the input list of polygons.
@@ -133,6 +140,7 @@ def findVolumesList(polygons):
     area = [polygon.area for polygon in polygons]
     #area = polygons.area
     return area
+
 
 def getNewCellValue(newcell, svalues, sdists, sareas):
     '''
@@ -142,6 +150,7 @@ def getNewCellValue(newcell, svalues, sdists, sareas):
     newvalue = numpy.sum((numpy.asarray(svalues)) * numpy.asarray(sareas)) / newcell.area
     return newvalue
 
+
 def getCentroid(polygons):
     '''
     Calculate the location of the centroids of the list of input polygons
@@ -150,6 +159,7 @@ def getCentroid(polygons):
     points = [polygon.centroid for polygon in polygons]
     #points = polygons.centroid
     return points
+
 
 def haversine(lat1, lon1, lat2, lon2):
     import math
@@ -161,11 +171,7 @@ def haversine(lat1, lon1, lat2, lon2):
     endY = math.radians(lat2)
     diffX = endX - startX
     diffY = endY - startY
-    a = math.sin(diffY/2)**2 + math.cos(startY) * math.cos(endY) * math.sin(diffX/2)**2
-    c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1-a))
+    a = math.sin(diffY / 2) ** 2 + math.cos(startY) * math.cos(endY) * math.sin(diffX / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a),  math.sqrt(1 - a))
     length = 6371 * c
     return length
-
-
-
-

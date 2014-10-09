@@ -23,9 +23,9 @@ URL_SHRINK_SAFE = "http://shrinksafe.dojotoolkit.org/shrinksafe.php"
 
 # This would normally be dynamically generated:
 BOUNDARY_MARKER = "---------------------------72288400411964641492083565382"
-                   
+
 if __name__ == "__main__":
-    ## Grab the source code
+    # Grab the source code
     try:
         sourceFilename = sys.argv[1]
     except:
@@ -37,8 +37,8 @@ if __name__ == "__main__":
         sourceFilename = "stdin.js"
     else:
         sourceCode = open(sourceFilename).read()
-        
-    ## Create the request replicating posting of the form from the web page
+
+    # Create the request replicating posting of the form from the web page
     request = urllib2.Request(url=URL_SHRINK_SAFE)
     request.add_header("Content-Type",
                        "multipart/form-data; boundary=%s" % BOUNDARY_MARKER)
@@ -50,5 +50,5 @@ Content-Type: application/x-javascript
 %s
 """ % (BOUNDARY_MARKER, sourceFilename, sourceCode))
 
-    ## Deliver the result
+    # Deliver the result
     print urllib2.urlopen(request).read(),

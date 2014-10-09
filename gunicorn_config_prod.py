@@ -25,25 +25,26 @@ worker = "gevent"
 
 if worker is "gevent":
     try:
-        #must import gevent monkey patching before threading library
-        #http://stackoverflow.com/questions/8774958/keyerror-in-module-threading-after-a-successful-py-test-run
-        import gevent.monkey; gevent.monkey.patch_thread()
+        # must import gevent monkey patching before threading library
+        # http://stackoverflow.com/questions/8774958/keyerror-in-module-threading-after-a-successful-py-test-run
+        import gevent.monkey
+        gevent.monkey.patch_thread()
     except:
-        worker="sync"
+        worker = "sync"
 elif worker is "eventlet":
     try:
         import eventlet
     except:
-        worker="sync"
+        worker = "sync"
 elif worker is "tornado":
     try:
         pass
     except:
-        worker="sync"
+        worker = "sync"
 else:
     # default to basic sync worker if other libs are 
     # not installed
-    worker="sync"
+    worker = "sync"
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sciwms.settings.prod")
 

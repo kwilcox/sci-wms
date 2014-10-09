@@ -31,13 +31,14 @@ from rtree import index as rindex
 
 from wms import wms_handler
 from wms.matplotlib_handler import blank_canvas,\
-     quiver_response, get_nearest_start_time, contourf_response
+    quiver_response, get_nearest_start_time, contourf_response
 from sciwms.util import cf, get_pyproj,\
-      get_rtree_nodes_path, rtree_nodes_exists,\
-      print_exception
+    get_rtree_nodes_path, rtree_nodes_exists,\
+    print_exception
 
 import logging
 logger = logging.getLogger('wms')
+
 
 def getFeatureInfo(request, dataset):
     """
@@ -46,10 +47,10 @@ def getFeatureInfo(request, dataset):
     try:
         logger.info("IN getFeatureInfo!!!")
         X, Y = wms_handler.get_xy(request)
-        logger.debug("x = {0}, y = {1}".format(X,Y))
+        logger.debug("x = {0}, y = {1}".format(X, Y))
 
         xmin, ymin, xmax, ymax = wms_handler.get_bbox(request)
-        logger.debug("xmin = {0}, ymin = {1}, xmax = {2}, ymax = {3}".\
+        logger.debug("xmin = {0}, ymin = {1}, xmax = {2}, ymax = {3}".
                      format(xmin, ymin, xmax, ymax))
 
         width, height = wms_handler.get_width_height(request)
@@ -68,16 +69,16 @@ def getFeatureInfo(request, dataset):
         # Find the gfi position as lat/lon, assumes 0,0 is ul corner of map
 
         # target longitude, target latitude
-        tlon, tlat = mi(xmin+((xmax-xmin)*(X/width)),
-                        ymax-((ymax-ymin)*(Y/height)),
+        tlon, tlat = mi(xmin + ((xmax - xmin) * (X / width)),
+                        ymax - ((ymax - ymin) * (Y / height)),
                         inverse=True)
 
-        logger.debug('tlon = {0}, tlat = {1}'.format(tlon,tlat))
+        logger.debug('tlon = {0}, tlat = {1}'.format(tlon, tlat))
 
         lonmin, latmin = mi(xmin, ymin, inverse=True)
         lonmax, latmax = mi(xmax, ymax, inverse=True)
 
-        logger.debug('lonmin = {0}, latmin = {1}, lonmax = {2}, latmax = {3}'.\
+        logger.debug('lonmin = {0}, latmin = {1}, lonmax = {2}, latmax = {3}'.
                      format(lonmin, latmin, lonmax, latmax))
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -90,25 +91,24 @@ def getFeatureInfo(request, dataset):
     # 2) get index of "node" that is closest to the requested point
     #    NOTE: node is more meaningful in UGRID, but is also created for each grid point in structured grids
 
-
-    ugrid = False # flag to track if UGRID file is found
+    ugrid = False  # flag to track if UGRID file is found
     # ------------------------------------------------------------------------------------------------------------UGRID
     # pyugrid to handle UGRID topology
     try:
         logger.info("Trying to load pyugrid cache {0}".format(dataset))
         try:
             topology_path = os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc')
-        
+
             ug = pyugrid.UGrid.from_ncfile(topology_path)
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.info("getFeatureInfo ERROR: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
-            
+
         logger.info("Loaded pyugrid cache")
 
         # UGRID variables
-        lon = ug.nodes[:,0]
-        lat = ug.nodes[:,1]
+        lon = ug.nodes[:, 0]
+        lat = ug.nodes[:, 1]
         nv  = ug.faces[:]
 
         # rindex, create if none exists yet
@@ -121,14 +121,14 @@ def getFeatureInfo(request, dataset):
             # logger.debug('os.path.exists(dat_path) is {0}'.format(os.path.exists(dat_path)))
             # logger.debug('rtree_nodes_exists(dataset) is {0}'.\
             #              format(rtree_nodes_exists(dataset)))
-            
+
             tree = None
             if rtree_nodes_exists(dataset):
-                    logger.info('UGRID node index found %s' % nodes_path)
-                    tree = rindex.Index(nodes_path)
-                    logger.info('UGRID node index loaded.')
+                logger.info('UGRID node index found %s' % nodes_path)
+                tree = rindex.Index(nodes_path)
+                logger.info('UGRID node index loaded.')
 
-                    print_exception(log=logger)
+                print_exception(log=logger)
             else:
                 def generator_nodes():
                     for i, c in enumerate(zip(lon, lat, lon, lat)):
@@ -140,19 +140,19 @@ def getFeatureInfo(request, dataset):
         except:
             logger.info("HERE")
             print_exception(log=logger)
-            
-        logger.debug('Searching for closest node/cell for tlat={0}, tlon={1}'.\
-                     format(tlon,tlat))
+
+        logger.debug('Searching for closest node/cell for tlat={0}, tlon={1}'.
+                     format(tlon, tlat))
         try:
             # find closest node or cell (only doing node for now)
             nindex = list(tree.nearest((tlon, tlat, tlon, tlat), 1, objects=True))[0]
             logger.debug('nearest index = {0}'.format(nindex))
-            
+
             selected_longitude, selected_latitude = tuple(nindex.bbox[:2])
-            logger.debug('selected_longitude = {0}, selected_latitude = {1}'.\
+            logger.debug('selected_longitude = {0}, selected_latitude = {1}'.
                          format(selected_longitude, selected_latitude))
-            
-            index = nindex.id # single value (node index)
+
+            index = nindex.id  # single value (node index)
             # tree.close()
         except:
             print_exception(log=logger)
@@ -160,24 +160,24 @@ def getFeatureInfo(request, dataset):
         finally:
             tree.close()
             logger.info("everywhere")
-            
+
         logger.debug("Found closest node/cell @ index = {0}".format(index))
-        
+
         # this is UGRID
         ugrid = True
-    
+
     # ------------------------------------------------------------------------------------------------------------ Not pyUGRID
-    except: # default to previous workflow for non UGRID
+    except:  # default to previous workflow for non UGRID
         # structured grids (where 'nodes' are the structured points)
         topology = netCDF4.Dataset(
             os.path.join(settings.TOPOLOGY_PATH, dataset + '.nc'))
-        
+
         lats = topology.variables['lat'][:]
         lons = topology.variables['lon'][:]
 
         # rindex, create if none exists yet
         nodes_path = os.path.join(settings.TOPOLOGY_PATH, dataset + '_nodes')
-        if os.path.exists(nodes_path+'.dat') and os.path.exists(nodes_path+'.idx'):
+        if os.path.exists(nodes_path + '.dat') and os.path.exists(nodes_path + '.idx'):
             tree = rindex.Index(nodes_path)
             logger.info('non-UGRID node index found %s' % nodes_path)
         else:
@@ -193,17 +193,17 @@ def getFeatureInfo(request, dataset):
             logger.info('non-UGRID nodes indexed')
 
         # find closest node or cell (only doing node for now)
-        nindex = list(tree.nearest((tlon, tlat, tlon, tlat), 1, objects=True))[0] # returns generator > cast to list and get [0] value
+        nindex = list(tree.nearest((tlon, tlat, tlon, tlat), 1, objects=True))[0]  # returns generator > cast to list and get [0] value
         # why are lat/lon 3d? eg. why using the [0] index in next line for both lats and lons
         logger.info('shape of lons: {0}'.format(lons.shape))
         logger.info('shape of lats: {0}'.format(lats.shape))
-        
+
         selected_longitude, selected_latitude = lons[nindex.object[0], nindex.object[1]][0], lats[nindex.object[0], nindex.object[1]][0]
-        #index = nindex.object # tuple ((row,),(col,))
-        index = (nindex.object[0][0],nindex.object[1][0]) # tuple(row,col) from that nasty ((row,),(col,)) returned object
+        # index = nindex.object # tuple ((row,),(col,))
+        index = (nindex.object[0][0], nindex.object[1][0])  # tuple(row,col) from that nasty ((row,),(col,)) returned object
         logger.info('index: {0}'.format(index))
         tree.close()
-        #index = numpy.asarray(index) # array([[row],[col]])
+        # index = numpy.asarray(index) # array([[row],[col]])
         topology.close()
 
     # nothing UGRID related below
@@ -213,7 +213,7 @@ def getFeatureInfo(request, dataset):
     except:
         logger.error("Couldn't find {0} in database".format(dataset))
         print_exception(log=logger)
-        
+
     datasetnc = netCDF4.Dataset(url)
     logger.debug('loaded datasetnc')
 
@@ -259,8 +259,7 @@ def getFeatureInfo(request, dataset):
         if time1 == -1:
             time = [0]
         else:
-            time = [time1-1]
-
+            time = [time1 - 1]
 
     def getvar(v, t, z, i):
         '''
@@ -274,24 +273,24 @@ def getFeatureInfo(request, dataset):
         if isinstance(i, tuple):
             # 3D: time/vertical/horizontal
             if len(v.shape) == 4:
-                return v[t,z,i[0],i[1]]
+                return v[t, z, i[0], i[1]]
             # 2D: time/horizontal
             elif len(v.shape) == 3:
-                return v[t,i[0],i[1]]
+                return v[t, i[0], i[1]]
             # 1D: horizontal (independent of time)
             elif len(v.shape) == 2:
-                return [v[i[0],i[1]]] # return expects list
+                return [v[i[0], i[1]]]  # return expects list
         # UGRID (node based)
         else:
             # 3D: time/vertical/horizontal
             if len(v.shape) == 3:
-                return v[t,z,i]
+                return v[t, z, i]
             # 2D: time/horizontal
             elif len(v.shape) == 2:
-                return v[t,i]
+                return v[t, i]
             # 1D: horizontal (independent of time)
             elif len(v.shape) == 1:
-                return [v[i]] # return expects list
+                return [v[i]]  # return expects list
     try:
         # get values for requested QUERY_LAYERS
         varis = deque()
@@ -301,7 +300,7 @@ def getFeatureInfo(request, dataset):
         if time_variable is None:
             time_variable = datasetnc.variables['time']
         # TODO: handle not finding time dimension
-        varis.append(time_variable[time]) # adds time as first element (in NetCDF format, converted later) [time] should be [tindex] or something obviously an index
+        varis.append(time_variable[time])  # adds time as first element (in NetCDF format, converted later) [time] should be [tindex] or something obviously an index
         for var in QUERY_LAYERS:
             # map from QUERY_LAYERS name (AKA UI name) to CF standard_name
             # v = cf.map.get(var, None)
@@ -314,7 +313,7 @@ def getFeatureInfo(request, dataset):
             except:
                 units = ""
             values = getvar(variable, time, elevation, index)
-            logger.info('appending ({0},{1},{2})'.format(var,units,":"))
+            logger.info('appending ({0},{1},{2})'.format(var, units, ":"))
             varis.append((var, units, values))
     except:
         print_exception(log=logger)
@@ -387,20 +386,20 @@ def getFeatureInfo(request, dataset):
         d["geometry"] = { "type" : "Point", "coordinates" : [float(selected_longitude), float(selected_latitude)] }
         # build 'properties' value of return
         properties = {}
-        properties['time'] = {'units':'iso', 'values':[t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]}
-        properties['latitude'] = {'units':'degrees_north', 'values':float(selected_latitude)}
-        properties['longitude'] = {'units':'degrees_east', 'values':float(selected_longitude)}
+        properties['time'] = {'units': 'iso', 'values': [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in varis[0]]}
+        properties['latitude'] = {'units': 'degrees_north', 'values': float(selected_latitude)}
+        properties['longitude'] = {'units': 'degrees_east', 'values': float(selected_longitude)}
         # varis are tuple(name,unit,data)
-        for v in [varis[i] for i in range(1,len(varis))]: # because deque was used and first is time, ugh, http://stackoverflow.com/questions/10003143/how-to-slice-a-deque
+        for v in [varis[i] for i in range(1, len(varis))]:  # because deque was used and first is time, ugh, http://stackoverflow.com/questions/10003143/how-to-slice-a-deque
             name = v[0]
             units = v[1]
-            values = [] # output as floats
+            values = []  # output as floats
             for value in v[2]:
                 if numpy.isnan(value):
                     values.append(float('nan'))
                 else:
                     values.append(float(value))
-            properties[name] = {'units':units, 'values':values}
+            properties[name] = {'units': units, 'values': values}
         d['properties'] = properties
         # output string to return
         output = callback + '(' + json.dumps(d, indent=4, separators=(',', ': '), allow_nan=True) + ')'
@@ -414,10 +413,10 @@ def getFeatureInfo(request, dataset):
         header = ["time"]
         header.append("latitude[degrees_north]")
         header.append("longitude[degrees_east]")
-        for v in [varis[i] for i in range(1,len(varis))]: # because deque was used and first is time, ugh, http://stackoverflow.com/questions/10003143/how-to-slice-a-deque
+        for v in [varis[i] for i in range(1, len(varis))]:  # because deque was used and first is time, ugh, http://stackoverflow.com/questions/10003143/how-to-slice-a-deque
             name = v[0]
             units = v[1]
-            header.append(name+'['+units+']')
+            header.append(name + '[' + units + ']')
         c.writerow(header)
         # each line (time and vars should be same length)
         for i, t in enumerate(varis[0]):
@@ -427,11 +426,11 @@ def getFeatureInfo(request, dataset):
             row.append(selected_longitude)
             for k in range(1, len(varis)):
                 values = varis[k][2]
-                if type(values)==numpy.ndarray or type(values)==numpy.ma.core.MaskedArray:
+                if isinstance(values, numpy.ndarray) or isinstance(values, numpy.ma.core.MaskedArray):
                     try:
                         row.append(values[i])
                     except:
-                        row.append(values) # triggered if scalar?
+                        row.append(values)  # triggered if scalar?
                 # if variable not changing with type, like bathy
                 else:
                     row.append(values)

@@ -25,10 +25,12 @@
 
 import re
 
+
 def strip_comments_helper(data):
     """remove all /* */ format comments and surrounding whitespace."""
     p = re.compile(r'[\s]*/\*.*?\*/[\s]*', re.DOTALL)
-    return p.sub('',data)
+    return p.sub('', data)
+
 
 def minimize(data, exclude=None):
     """Central function call. This will call all other compression

@@ -18,7 +18,17 @@ This file is part of SCI-WMS.
 '''
 
 
-import sys, os, gc, bisect, math, datetime, numpy, netCDF4, multiprocessing, logging, traceback
+import sys
+import os
+import gc
+import bisect
+import math
+import datetime
+import numpy
+import netCDF4
+import multiprocessing
+import logging
+import traceback
 from wms.models import Dataset, Server, Group
 from django.contrib.sites.models import Site
 from django.http import HttpResponse, HttpResponseRedirect
@@ -33,7 +43,8 @@ except ImportError:
 import logging
 logger = logging.getLogger('wms')
 
-def groupGetCapabilities(req, group): # TODO move get capabilities to template system like sciwps
+
+def groupGetCapabilities(req, group):  # TODO move get capabilities to template system like sciwps
     """
     get capabilities document based on this getcaps:
 
@@ -43,11 +54,10 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
 
     datasets = list(Dataset.objects.filter(group=group))
 
-
     # Create the object to be encoded to xml later
     root = ET.Element('WMT_MS_Capabilities')
-    root.attrib["version"] = "1.1.1"#request.GET["version"]
-    href = "http://" + Site.objects.values()[0]['domain'] + "/" + group.name + "/?" # must encode spaces here
+    root.attrib["version"] = "1.1.1"  # request.GET["version"]
+    href = "http://" + Site.objects.values()[0]['domain'] + "/" + group.name + "/?"  # must encode spaces here
 
     # Plug into your generic implentation of sciwms template
     # will have to pull these fields out of the database directly
@@ -65,7 +75,7 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
     onlineresource = ET.SubElement(service, "OnlineResource")
     onlineresource.attrib["xlink:type"] = "simple"
     onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    #Contact Information
+    # Contact Information
     contactinformation = ET.SubElement(service, "ContactInformation")
     primarycontact = ET.SubElement(contactinformation, "ContactPersonPrimary")
     ET.SubElement(primarycontact, "ContactPerson").text = servermetadata["contact_person"]
@@ -135,7 +145,7 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
     getlegend_onlineresource.attrib["xlink:type"] = "simple"
     getlegend_onlineresource.attrib["xlink:href"] = href
     getlegend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    #Exception
+    # Exception
     exception = ET.SubElement(capability, "Exception")
     ET.SubElement(exception, "Format").text = "text/html"
 
@@ -163,7 +173,7 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
             if location == "face":
                 location = "cell"
             try:
-                #nc.variables[variable].location
+                # nc.variables[variable].location
                 layer1 = ET.SubElement(layer, "Layer")
                 layer1.attrib["queryable"] = "1"
                 layer1.attrib["opaque"] = "0"
@@ -207,16 +217,16 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
                 elev_extent.attrib["default"] = "0"
                 try:
                     units = topology.variables["time"].units
-                    time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                    time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
                 except:
                     time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
 
-                ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
+                # Listing all available elevation layers is a tough thing to do for the range of types of datasets...
                 if topology.grid.lower() == 'false':
                     if nc.variables[variable].ndim > 2:
                         try:
-                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","").replace(" ", "")
-                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","").replace(" ", "")
+                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
+                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "").replace(" ", "")
                         except:
                             ET.SubElement(layer1, "DepthLayers").text = ""
                         try:
@@ -232,19 +242,19 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
                         ET.SubElement(layer1, "DepthLayers").text = "0"
                         ET.SubElement(layer1, "DepthDirection").text = "Down"
                         elev_extent.text = "0"
-                elif topology.grid.lower() =='cgrid':
+                elif topology.grid.lower() == 'cgrid':
                     if nc.variables[variable].ndim > 3:
                         try:
-                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[","").replace("]","").replace(" ", "")
-                            elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[","").replace("]","").replace(" ", "")
+                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
+                            elev_extent.text = str(range(nc.variables[variable].shape[1])).replace("[", "").replace("]", "").replace(" ", "")
                         except:
                             ET.SubElement(layer1, "DepthLayers").text = ""
                         try:
-                            #if nc.variables["depth"].positive.lower() == "up":
+                            # if nc.variables["depth"].positive.lower() == "up":
                             #    ET.SubElement(layer1, "DepthDirection").text = "Down"
-                            #elif nc.variables["depth"].positive.lower() == "down":
+                            # elif nc.variables["depth"].positive.lower() == "down":
                             #    ET.SubElement(layer1, "DepthDirection").text = "Up"
-                            #else:
+                            # else:
                             #    ET.SubElement(layer1, "DepthDirection").text = ""
                             ET.SubElement(layer1, "DepthDirection").text = ""
                         except:
@@ -273,7 +283,7 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
                     #legend_onlineresource.attrib["xlink:type"] = "simple"
                     #legend_onlineresource.attrib["xlink:href"] = href
                     #legend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-                if variable == "u" or variable == "u-vel" or variable == "ua" or variable=="U" or variable=="uc" or variable=="air_u" or variable=="water_u":
+                if variable == "u" or variable == "u-vel" or variable == "ua" or variable == "U" or variable == "uc" or variable == "air_u" or variable == "water_u":
                     if variable == "u":
                         layername = "u,v"
                     elif variable == "u-vel":
@@ -328,13 +338,13 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
                     elev_extent.attrib["default"] = "0"
                     try:
                         units = topology.variables["time"].units
-                        time_extent.text = netCDF4.num2date(topology.variables["time"][0],units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1],units).isoformat('T') + "Z"
+                        time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
                     except:
                         time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
                     if nc.variables[variable].ndim > 2:
                         try:
-                            ET.SubElement(layer1, "DepthLayers").text =  str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
-                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[","").replace("]","")
+                            ET.SubElement(layer1, "DepthLayers").text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
+                            elev_extent.text = str(range(nc.variables["siglay"].shape[0])).replace("[", "").replace("]", "")
                         except:
                             ET.SubElement(layer1, "DepthLayers").text = ""
                         try:
@@ -383,7 +393,7 @@ def groupGetCapabilities(req, group): # TODO move get capabilities to template s
             except:
                 pass
             response = HttpResponse(content_type="text/javascript")
-            output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',',': '), allow_nan=True) + ")"
+            output_str = callback + "(" + json.dumps(output_dict, indent=4, separators=(',', ': '), allow_nan=True) + ")"
             response.write(output_str)
         else:
             # Return the response

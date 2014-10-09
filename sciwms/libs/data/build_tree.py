@@ -36,7 +36,7 @@ def build_from_nc(filename):
         lat = nc.variables['lat'][:]
         lon = nc.variables['lon'][:]
         nc.close()
-        #print lon.shape
+        # print lon.shape
 
         def generator_nodes():
             c = -1
@@ -47,9 +47,9 @@ def build_from_nc(filename):
                     yield(c, coord, ((row,), (col,)))
 
         filename = filename[:-3]
-        tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
+        tree = index.Index(filename + '_nodes', generator_nodes(), overwrite=True)
         if timing:
-            print (datetime.now()-timer).seconds  # How long did it take to add the points
+            print (datetime.now() - timer).seconds  # How long did it take to add the points
         tree.close()
     else:
         lat = nc.variables['lat'][:]
@@ -57,7 +57,7 @@ def build_from_nc(filename):
         latc = nc.variables['latc'][:]
         lonc = nc.variables['lonc'][:]
         nv = nc.variables['nv'][:]  # (3, long)
-        #print nv.shape, lonc.shape
+        # print nv.shape, lonc.shape
         nc.close()
 
         def generator_nodes():
@@ -66,17 +66,17 @@ def build_from_nc(filename):
 
         def generator_cells():
             for i, coord in enumerate(zip(lonc, latc, lonc, latc)):
-                yield( i, coord, (lon[nv[:, i]-1], lat[nv[:, i]-1],) )
+                yield( i, coord, (lon[nv[:, i] - 1], lat[nv[:, i] - 1],) )
 
         filename = filename[:-3]
-        tree = index.Index(filename+'_nodes', generator_nodes(), overwrite=True)
+        tree = index.Index(filename + '_nodes', generator_nodes(), overwrite=True)
         if timing:
-            print (datetime.now()-timer).seconds  # How long did it take to add the points
+            print (datetime.now() - timer).seconds  # How long did it take to add the points
         tree.close()
-        tree = index.Index(filename+'_cells', generator_cells(), overwrite=True, pagesize=2**17)
+        tree = index.Index(filename + '_cells', generator_cells(), overwrite=True, pagesize=2 ** 17)
         tree.close()
         if timing:
-            print (datetime.now()-timer).seconds  # How long did it take to add the points
+            print (datetime.now() - timer).seconds  # How long did it take to add the points
 
 if __name__ == "__main__":
     filename = sys.argv[1]

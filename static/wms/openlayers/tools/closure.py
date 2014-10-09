@@ -6,6 +6,7 @@ path = "../tools/closure-compiler.jar"
 if not os.path.exists(path):
     raise Exception("No closure-compiler.jar at %s; read README.txt!" % path)
 
+
 def minimize(code):
     ntf = tempfile.NamedTemporaryFile(delete=False)
     ntf.write(code)

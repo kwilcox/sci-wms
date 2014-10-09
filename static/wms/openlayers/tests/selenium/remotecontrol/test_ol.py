@@ -15,7 +15,7 @@ c.read(filename)
 targets = {}
 
 server = c.get('config', 'server') 
-url= c.get('config', 'url')
+url = c.get('config', 'url')
 if c.has_option('config', 'timeout'):
     MAX_TEST_LENGTH = int(c.get('config', 'timeout'))
 
@@ -23,7 +23,7 @@ if c.has_option('config', 'timeout'):
 sections = c.sections()
 for s in sections:
     if s == 'config':
-       continue
+        continue
     targets[s] = dict(c.items(s))
     targets[s]['name'] = s
 
@@ -51,12 +51,12 @@ if 1:
             s.select_window("test_running")
             time.sleep(2)
             s.refresh()
-            
+
             count = 0
             while count == 0: 
                 count = int(s.get_eval("window.document.getElementById('testtable').getElementsByTagName('tr').length"))
                 time.sleep(5)
-                
+
             ok = 0 
             fail = 0
             last_change = time.time()
@@ -67,13 +67,13 @@ if 1:
                     ok = new_ok
                     fail = new_fail
                     last_change = time.time()
-                    
+
                 if (ok + fail) >= count:
                     break 
                 if time.time() - last_change > MAX_TEST_LENGTH:
                     raise Exception("Failed: with %s okay and %s failed, ran out of time: %s is more than %s" % (ok, fail, (time.time() - last_change), MAX_TEST_LENGTH))      
                 time.sleep(10)
-            
+
             if fail:
                 print "Failed: %s" % fail
                 html = s.get_eval("window.document.getElementById('results').innerHTML").encode("utf-8")
@@ -86,10 +86,9 @@ if 1:
                 f = open("fail.%s.%s.html" % (time.time(), b['name']), "w")
                 f.write(all_html)
                 f.close()
-        except KeyboardInterrupt, E:
+        except KeyboardInterrupt as E:
             keep_going = False
             print "Stopped by keyboard interrupt"
-        except Exception, E:
+        except Exception as E:
             print "Error: ", E
         s.stop()
-

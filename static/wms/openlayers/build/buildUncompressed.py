@@ -3,7 +3,8 @@
 import sys
 sys.path.append("../tools")
 
-import jsmin, mergejs
+import jsmin
+import mergejs
 
 sourceDirectory = "../lib"
 configFilename = "full.cfg"

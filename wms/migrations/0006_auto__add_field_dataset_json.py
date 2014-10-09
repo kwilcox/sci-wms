@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('jsonfield.fields.JSONField')(null=True, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'Dataset.json'
         db.delete_column(u'wms_dataset', 'json')
-
 
     models = {
         u'wms.dataset': {

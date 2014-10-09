@@ -43,12 +43,16 @@ import sys
 
 SUFFIX_JAVASCRIPT = ".js"
 
-RE_REQUIRE = "@requires?:? (.*)\n" # TODO: Ensure in comment?
+RE_REQUIRE = "@requires?:? (.*)\n"  # TODO: Ensure in comment?
+
 
 class MissingImport(Exception):
+
     """Exception raised when a listed import is not found in the lib."""
 
+
 class SourceFile:
+
     """
     Represents a Javascript source code file.
     """
@@ -61,7 +65,6 @@ class SourceFile:
 
         self.requiredBy = []
 
-
     def _getRequirements(self):
         """
         Extracts the dependencies specified in the source code and returns
@@ -73,7 +76,6 @@ class SourceFile:
     requires = property(fget=_getRequirements, doc="")
 
 
-
 def usage(filename):
     """
     Displays a usage message.
@@ -82,6 +84,7 @@ def usage(filename):
 
 
 class Config:
+
     """
     Represents a parsed configuration file.
 
@@ -110,22 +113,23 @@ class Config:
     The files list in the `exclude` section will not be imported.
 
     Any text appearing after a # symbol indicates a comment.
-    
+
     """
 
     def __init__(self, filename):
         """
         Parses the content of the named file and stores the values.
         """
-        lines = [re.sub("#.*?$", "", line).strip() # Assumes end-of-line character is present
+        lines = [re.sub("#.*?$", "", line).strip()  # Assumes end-of-line character is present
                  for line in open(filename)
-                 if line.strip() and not line.strip().startswith("#")] # Skip blank lines and comments
+                 if line.strip() and not line.strip().startswith("#")]  # Skip blank lines and comments
 
         self.forceFirst = lines[lines.index("[first]") + 1:lines.index("[last]")]
 
         self.forceLast = lines[lines.index("[last]") + 1:lines.index("[include]")]
-        self.include =  lines[lines.index("[include]") + 1:lines.index("[exclude]")]
-        self.exclude =  lines[lines.index("[exclude]") + 1:]
+        self.include = lines[lines.index("[include]") + 1:lines.index("[exclude]")]
+        self.exclude = lines[lines.index("[exclude]") + 1:]
+
 
 def undesired(filepath, excludes):
     # exclude file if listed
@@ -139,20 +143,20 @@ def undesired(filepath, excludes):
                 exclude = True
                 break
     return exclude
-            
 
-def run (sourceDirectory, outputFilename = None, configFile = None):
+
+def run(sourceDirectory, outputFilename = None, configFile = None):
     cfg = None
     if configFile:
         cfg = Config(configFile)
 
     allFiles = []
 
-    ## Find all the Javascript source files
+    # Find all the Javascript source files
     for root, dirs, files in os.walk(sourceDirectory):
         for filename in files:
             if filename.endswith(SUFFIX_JAVASCRIPT) and not filename.startswith("."):
-                filepath = os.path.join(root, filename)[len(sourceDirectory)+1:]
+                filepath = os.path.join(root, filename)[len(sourceDirectory) + 1:]
                 filepath = filepath.replace("\\", "/")
                 if cfg and cfg.include:
                     if filepath in cfg.include or filepath in cfg.forceFirst:
@@ -160,18 +164,18 @@ def run (sourceDirectory, outputFilename = None, configFile = None):
                 elif (not cfg) or (not undesired(filepath, cfg.exclude)):
                     allFiles.append(filepath)
 
-    ## Header inserted at the start of each file in the output
+    # Header inserted at the start of each file in the output
     HEADER = "/* " + "=" * 70 + "\n    %s\n" + "   " + "=" * 70 + " */\n\n"
 
     files = {}
 
-    ## Import file source code
-    ## TODO: Do import when we walk the directories above?
+    # Import file source code
+    # TODO: Do import when we walk the directories above?
     for filepath in allFiles:
         print "Importing: %s" % filepath
         fullpath = os.path.join(sourceDirectory, filepath).strip()
-        content = open(fullpath, "U").read() # TODO: Ensure end of line @ EOF?
-        files[filepath] = SourceFile(filepath, content) # TODO: Chop path?
+        content = open(fullpath, "U").read()  # TODO: Ensure end of line @ EOF?
+        files[filepath] = SourceFile(filepath, content)  # TODO: Chop path?
 
     print
 
@@ -183,40 +187,40 @@ def run (sourceDirectory, outputFilename = None, configFile = None):
     while not complete:
         complete = True
 
-        ## Resolve the dependencies
+        # Resolve the dependencies
         print "Resolution pass %s... " % resolution_pass
         resolution_pass += 1 
 
         for filepath, info in files.items():
             for path in info.requires:
-                if not files.has_key(path):
+                if path not in files:
                     complete = False
                     fullpath = os.path.join(sourceDirectory, path).strip()
                     if os.path.exists(fullpath):
                         print "Importing: %s" % path
-                        content = open(fullpath, "U").read() # TODO: Ensure end of line @ EOF?
-                        files[path] = SourceFile(path, content) # TODO: Chop path?
+                        content = open(fullpath, "U").read()  # TODO: Ensure end of line @ EOF?
+                        files[path] = SourceFile(path, content)  # TODO: Chop path?
                     else:
                         raise MissingImport("File '%s' not found (required by '%s')." % (path, filepath))
-        
+
     # create dictionary of dependencies
     dependencies = {}
     for filepath, info in files.items():
         dependencies[filepath] = info.requires
 
     print "Sorting..."
-    order = toposort(dependencies) #[x for x in toposort(dependencies)]
+    order = toposort(dependencies)  # [x for x in toposort(dependencies)]
 
-    ## Move forced first and last files to the required position
+    # Move forced first and last files to the required position
     if cfg:
         print "Re-ordering files..."
         order = cfg.forceFirst + [item
-                     for item in order
-                     if ((item not in cfg.forceFirst) and
-                         (item not in cfg.forceLast))] + cfg.forceLast
-    
+                                  for item in order
+                                  if ((item not in cfg.forceFirst) and
+                                      (item not in cfg.forceLast))] + cfg.forceLast
+
     print
-    ## Output the files in the determined order
+    # Output the files in the determined order
     result = []
 
     for fp in order:
@@ -239,7 +243,7 @@ if __name__ == "__main__":
     import getopt
 
     options, args = getopt.getopt(sys.argv[1:], "-c:")
-    
+
     try:
         outputFilename = args[0]
     except IndexError:

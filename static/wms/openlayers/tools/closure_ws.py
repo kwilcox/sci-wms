@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
-import httplib, urllib, sys
+import httplib
+import urllib
+import sys
 import time
 # Define the parameters for the POST request and encode them in
 # a URL-safe format.
+
 
 def minimize(code):
 
@@ -12,8 +15,8 @@ def minimize(code):
         ('compilation_level', 'SIMPLE_OPTIMIZATIONS'),
         ('output_format', 'text'),
         ('output_info', 'compiled_code'),
-      ])
-    
+    ])
+
     t = time.time()
     # Always use the following value for the Content-type header.
     headers = { "Content-type": "application/x-www-form-urlencoded" }

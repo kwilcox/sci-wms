@@ -59,14 +59,17 @@ logger = logging.getLogger('wms')
 
 time_units = 'hours since 1970-01-01'
 
+
 class FastRtree(rtree.Rtree):
+
     def dumps(self, obj):
         try:
             import cPickle
-            return cPickle.dumps(obj,-1)
+            return cPickle.dumps(obj, -1)
         except ImportError:
             super(FastRtree, self).dumps(obj)
-            
+
+
 def create_rtree_from_ug(ug, dataset_name):
     logger.info("Building Rtree Topology Cache for {0}".format(dataset_name))
 
@@ -78,13 +81,13 @@ def create_rtree_from_ug(ug, dataset_name):
 
     rtree_file = os.path.join(settings.TOPOLOGY_PATH, dataset_name + '.updating')
     # rtree_tmp_file = rtree_file + 'update'
-    
+
     def rtree_generator_function():
-            for face_idx, node_list in enumerate(ug.faces):
-                nodes = ug.nodes[node_list]
-                xmin, ymin = np.min(nodes,0)
-                xmax, ymax = np.max(nodes,0)
-                yield (face_idx, (xmin,ymin,xmax,ymax), node_list)
+        for face_idx, node_list in enumerate(ug.faces):
+            nodes = ug.nodes[node_list]
+            xmin, ymin = np.min(nodes, 0)
+            xmax, ymax = np.max(nodes, 0)
+            yield (face_idx, (xmin, ymin, xmax, ymax), node_list)
 
     start = time.time()
     ridx = FastRtree(rtree_file,
@@ -95,23 +98,23 @@ def create_rtree_from_ug(ug, dataset_name):
 
     logger.info("Built Rtree Topology Cache in {0} seconds.".format(time.time() - start))
 
-    shutil.move(rtree_file+".dat",(rtree_file+".dat").replace('.updating',''))
-    shutil.move(rtree_file+".idx",(rtree_file+".idx").replace('.updating',''))
-    
-    
+    shutil.move(rtree_file + ".dat", (rtree_file + ".dat").replace('.updating', ''))
+    shutil.move(rtree_file + ".idx", (rtree_file + ".idx").replace('.updating', ''))
+
+
 def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
     try:
         logger.info("Trying pyugrid")
-        #try to load ugrid
+        # try to load ugrid
         ug = pyugrid.UGrid.from_ncfile(url)
 
         logger.info("Identified as UGrid---Using pyugrid to cache")
-        
-        #create the local cache temp file
-        nclocalpath = os.path.join(settings.TOPOLOGY_PATH, dataset_name+".nc.updating")
+
+        # create the local cache temp file
+        nclocalpath = os.path.join(settings.TOPOLOGY_PATH, dataset_name + ".nc.updating")
         ug.save_as_netcdf(nclocalpath)
-        
-        #move local cache temp to final destination(overwrite existing)
+
+        # move local cache temp to final destination(overwrite existing)
         shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
 
         create_rtree_from_ug(ug, dataset_name)
@@ -121,13 +124,14 @@ def create_topology(dataset_name, url, lat_var='lat', lon_var='lon'):
         logger.info("Trying old sciwms method")
         create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var = 'lon')
     finally:
-        #release unreferenced memory
+        # release unreferenced memory
         gc.collect()
-        
+
+
 def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
     try:
-        #with s1:
-        nclocalpath = os.path.join(settings.TOPOLOGY_PATH, dataset_name+".nc.updating")
+        # with s1:
+        nclocalpath = os.path.join(settings.TOPOLOGY_PATH, dataset_name + ".nc.updating")
         nc = ncDataset(url)
         nclocal = ncDataset(nclocalpath, mode="w", clobber=True)
         if "nv" in nc.variables:
@@ -153,7 +157,7 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
             if np.max(lontemp) > 180:
                 lontemp[lontemp > 180] = lontemp[lontemp > 180] - 360
                 lon[:] = np.asarray(lontemp)
-            #elif np.min(lontemp) < -180:
+            # elif np.min(lontemp) < -180:
             #    print "lessthan"
             #    lon[:] = np.asarray(lontemp) + 360
             #    lonc[:] = np.asarray(nc.variables['lonc'][:] + 360)
@@ -195,10 +199,10 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
             lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=(nc.variables['x'].shape[0],), zlib=False, complevel=0)
             latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=(nc.variables['element'].shape[0],), zlib=False, complevel=0)
             lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=(nc.variables['element'].shape[0],), zlib=False, complevel=0)
-            #if nc.variables['element'].shape[0] == 3:
+            # if nc.variables['element'].shape[0] == 3:
             #    nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape, zlib=False, complevel=0)
             #    nv[:,:] = nc.variables['element'][:,:]
-            #else:
+            # else:
             nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape[::-1], zlib=False, complevel=0)
 
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
@@ -212,7 +216,7 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
             import matplotlib.tri as Tri
             tri = Tri.Triangulation(lontemp,
                                     lattemp,
-                                    nc.variables['element'][:, :]-1
+                                    nc.variables['element'][:, :] - 1
                                     )
 
             lonc[:] = lontemp[tri.triangles].mean(axis=1)
@@ -240,10 +244,10 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
             lon = nclocal.createVariable('lon', 'f', ('node',), chunksizes=(nc.variables['x'].shape[0],), zlib=False, complevel=0)
             latc = nclocal.createVariable('latc', 'f', ('cell',), chunksizes=(nc.variables['ele'].shape[1],), zlib=False, complevel=0)
             lonc = nclocal.createVariable('lonc', 'f', ('cell',), chunksizes=(nc.variables['ele'].shape[1],), zlib=False, complevel=0)
-            #if nc.variables['element'].shape[0] == 3:
+            # if nc.variables['element'].shape[0] == 3:
             #    nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['element'].shape, zlib=False, complevel=0)
             #    nv[:,:] = nc.variables['element'][:,:]
-            #else:
+            # else:
             nv = nclocal.createVariable('nv', 'u8', ('corners', 'cell',), chunksizes=nc.variables['ele'].shape, zlib=False, complevel=0)
             time = nclocal.createVariable('time', 'f8', ('time',), chunksizes=nc.variables['time'].shape, zlib=False, complevel=0)
 
@@ -256,7 +260,7 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
             import matplotlib.tri as Tri
             tri = Tri.Triangulation(lontemp,
                                     lattemp,
-                                    nc.variables['ele'][:, :].T-1
+                                    nc.variables['ele'][:, :].T - 1
                                     )
 
             lonc[:] = lontemp[tri.triangles].mean(axis=1)
@@ -323,7 +327,7 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
             if "time" in nc.variables:
                 if nc.variables['time'].ndim > 1:
                     _str_data = nc.variables['time'][:, :]
-                    #print _str_data.shape, type(_str_data), "''", str(_str_data[0,:].tostring().replace(" ","")), "''"
+                    # print _str_data.shape, type(_str_data), "''", str(_str_data[0,:].tostring().replace(" ","")), "''"
                     dates = [parse(_str_data[i, :].tostring()) for i in range(len(_str_data[:, 0]))]
                     time[:] = date2num(dates, time_units)
                     time.units = time_units
@@ -341,11 +345,11 @@ def create_topology_cgrid(dataset_name, url, lat_var='lat', lon_var='lon'):
 
         shutil.move(nclocalpath, nclocalpath.replace(".updating", ""))
         if not ((os.path.exists(nclocalpath.replace(".updating", "").replace(".nc", '_nodes.dat')) and os.path.exists(nclocalpath.replace(".updating", "").replace(".nc", "_nodes.idx")))):
-            #with s1:
+            # with s1:
             build_tree.build_from_nc(nclocalpath.replace(".updating", ""))
         if grid == 'False':
             if not os.path.exists(nclocalpath.replace(".updating", "")[:-3] + '.domain'):
-                #with s2:
+                # with s2:
                 create_domain_polygon(nclocalpath.replace(".updating", ""))
 
     except Exception:
@@ -420,20 +424,20 @@ def create_domain_polygon(filename):
     from shapely.ops import cascaded_union
 
     nc = ncDataset(filename)
-    nv = nc.variables['nv'][:, :].T-1
-    #print np.max(np.max(nv))
+    nv = nc.variables['nv'][:, :].T - 1
+    # print np.max(np.max(nv))
     latn = nc.variables['lat'][:]
     lonn = nc.variables['lon'][:]
     lon = nc.variables['lonc'][:]
     lat = nc.variables['latc'][:]
-    #print lat, lon, latn, lonn, nv
+    # print lat, lon, latn, lonn, nv
     index_pos = np.asarray(np.where(
         (lat <= 90) & (lat >= -90) &
         (lon <= 180) & (lon > 0),)).squeeze()
     index_neg = np.asarray(np.where(
         (lat <= 90) & (lat >= -90) &
         (lon < 0) & (lon >= -180),)).squeeze()
-    #print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
+    # print np.max(np.max(nv)), np.shape(nv), np.shape(lonn), np.shape(latn)
     if len(index_pos) > 0:
         p = deque()
         p_add = p.append

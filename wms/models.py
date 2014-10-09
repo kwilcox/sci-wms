@@ -42,7 +42,7 @@ class Dataset(models.Model):
     topology_type           = models.CharField(blank=True, max_length=200, help_text="Grid type ugrid/cgrid.")
     cache_last_updated      = models.DateTimeField(null=True, editable=False)
     json                    = JSONField(blank=True, null=True, help_text="Arbitrary dataset-specific json blob")
-    
+
     def __unicode__(self):
         return self.name
 
@@ -63,6 +63,7 @@ class Dataset(models.Model):
         cache_file_list = glob.glob(os.path.join(settings.TOPOLOGY_PATH, self.name + '*'))
         for cache_file in cache_file_list:
             os.remove(cache_file)
+
 
 class VirtualLayer(models.Model):
     layer = models.CharField(max_length=200, help_text="Layer designation for the expression")

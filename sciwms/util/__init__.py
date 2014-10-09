@@ -9,9 +9,11 @@ from django.conf import settings
 
 logger = multiprocessing.get_logger()
 
+
 def print_exception(log=logger):
     exc_type, exc_value, exc_traceback = sys.exc_info()
     log.error("ERROR: " + repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+
 
 def get_pyproj(request):
     logger.debug("in get_proj")
@@ -25,10 +27,11 @@ def get_pyproj(request):
         except:
             projstr = "EPSG:3857"
             logger.debug("Projection not specified using default mercator {0}".format(projstr))
-            
+
     logger.debug("sciwms.util.get_pyproj projstr = {0}".format(projstr))
-    
+
     return pyproj.Proj(init=projstr)
+
 
 def get_rtree_nodes_path(dataset_name):
     """
@@ -40,18 +43,20 @@ def get_rtree_nodes_path(dataset_name):
     dat_path = nodes_root + '.dat'
     return nodes_root, idx_path, dat_path
 
+
 def rtree_nodes_exists(dataset_name):
     """
     Return True if there is a node rtree index for the given dataset_name.
     Return False otherwise
     """
     nodes_path, idx_path, dat_path = get_rtree_nodes_path(dataset_name)
-    logger.debug("rtree_nodes_exists::os.path.exists(idx_path) is {0}".\
+    logger.debug("rtree_nodes_exists::os.path.exists(idx_path) is {0}".
                  format(os.path.exists(idx_path)))
-    logger.debug("rtree_nodes_exists::os.path.exists(dat_path) is {0}".\
+    logger.debug("rtree_nodes_exists::os.path.exists(dat_path) is {0}".
                  format(os.path.exists(dat_path)))
-    
+
     return os.path.exists(idx_path) == True and os.path.exists(dat_path) == True
+
 
 def get_rtree_cells_path(dataset_name):
     """
@@ -63,6 +68,7 @@ def get_rtree_cells_path(dataset_name):
     dat_path = cells_root + '.dat'
     return cells_root, idx_path, dat_path
 
+
 def rtree_cells_exists(dataset_name):
     """
     Return True if there is a node rtree index for the given dataset_name.
@@ -70,9 +76,3 @@ def rtree_cells_exists(dataset_name):
     """
     cells_root, idx_path, dat_path = get_rtree_cells_path(dataset_name)
     return os.path.exists(idx_path) == True and os.path.exists(dat_path) == True
-    
-    
-    
-    
-
-        

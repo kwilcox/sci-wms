@@ -75,11 +75,13 @@ from wms.get_feature_info import getFeatureInfo
 import logging
 logger = logging.getLogger('wms')
 
+
 def crossdomain(request):
     with open(os.path.join(settings.COMMON_STATIC_FILES, "common", "crossdomain.xml")) as f:
         response = HttpResponse(content_type="text/xml")
         response.write(f.read())
     return response
+
 
 def datasets(request):
     try:
@@ -112,6 +114,7 @@ def datasets(request):
         logger.info(repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
     return HttpResponse(data, mimetype='application/json')
 
+
 def standard_names(request):
     """
     Return a json list of standard names for each variable available at a particular endpoint
@@ -128,7 +131,6 @@ def standard_names(request):
                 snames.append(sname)
         return snames
 
-    
     dataset_name = request.GET.get('dataset')
     if dataset_name:
         logger.debug("Requesting standard names for {0}".format(dataset_name))
@@ -142,7 +144,7 @@ def standard_names(request):
             if datasetdb.uri:
                 nc = netCDF4.Dataset(datasetdb.uri, 'r')
                 ret = get_snames_from_nc(nc)
-                
+
         except ObjectDoesNotExist:
             logger.debug("Couldn't find dataset_name = {0}".format(dataset_name))
 
@@ -150,32 +152,33 @@ def standard_names(request):
         ret = {}
         for datasetdb in Dataset.objects.all():
             if datasetdb.uri:
-                nc = netCDF4.Dataset(datasetdb.uri,'r')
+                nc = netCDF4.Dataset(datasetdb.uri, 'r')
                 snames = get_snames_from_nc(nc)
                 ret[datasetdb.name] = snames
-            
+
     ret = json.dumps(ret)
-    
-    #jsonp
+
+    # jsonp
     callback = request.GET.get('callback')
     if callback:
         ret = "{0}({1})".format(callback, ret)
 
     return HttpResponse(ret, mimetype='application/json')
-        
+
+
 def colormaps(request):
     """
     Get either a json list of available matplotlib colormaps or return an image preview.
     EX 1 localhost:8080/wms/colormaps will return a list of colormaps
     EX 2 localhost:8080/wms/colormaps/colormap=summer will return a small png preview
     """
-    #if not requesting a specific colormap, get a list (json) of colormaps
-    #if requesting a specific colormap, get a small png preview
-    colormap = request.GET.get('colormap',"").replace('-','_')
+    # if not requesting a specific colormap, get a list (json) of colormaps
+    # if requesting a specific colormap, get a small png preview
+    colormap = request.GET.get('colormap', "").replace('-', '_')
     logger.debug("colormap = {0}".format(colormap))
     if not colormap:
         import matplotlib.pyplot as plt
-        ret = json.dumps([m.replace('_','-') for m in plt.cm.datad if not m.endswith("_r")])
+        ret = json.dumps([m.replace('_', '-') for m in plt.cm.datad if not m.endswith("_r")])
         if 'callback' in request.REQUEST:
             ret = "{0}({1})".format(request.REQUEST['callback'], ret)
 
@@ -186,37 +189,37 @@ def colormaps(request):
         import numpy as np
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_agg import FigureCanvasAgg
-    
-        a = np.linspace(0,1,256).reshape(1,-1)
-        a = np.vstack((a,a))
 
+        a = np.linspace(0, 1, 256).reshape(1, -1)
+        a = np.vstack((a, a))
 
         fig = plt.figure(dpi=100., facecolor='none', edgecolor='none')
         fig.set_alpha(0)
 
-        #get request should be in units of pixels
-        w_pixels = float(request.GET.get('w',400.))
-        h_pixels = float(request.GET.get('h',10.4))
-        dpi = float(request.GET.get('dpi',80.))
-        w_inches = w_pixels/dpi
-        h_inches = h_pixels/dpi
-        
+        # get request should be in units of pixels
+        w_pixels = float(request.GET.get('w', 400.))
+        h_pixels = float(request.GET.get('h', 10.4))
+        dpi = float(request.GET.get('dpi', 80.))
+        w_inches = w_pixels / dpi
+        h_inches = h_pixels / dpi
+
         fig.set_figwidth(w_inches)
         fig.set_figheight(h_inches)
-        
-        ax = fig.add_axes([0.,0.,1.,1.], xticks=[], yticks=[])
-        ax.set_axis_off();
-        ax.imshow(a, aspect='auto',cmap=plt.get_cmap(colormap))
-        
+
+        ax = fig.add_axes([0., 0., 1., 1.], xticks=[], yticks=[])
+        ax.set_axis_off()
+        ax.imshow(a, aspect='auto', cmap=plt.get_cmap(colormap))
+
         canvas = FigureCanvasAgg(fig)
         response = HttpResponse(content_type='image/png')
         canvas.print_png(response)
         return response
-    
+
+
 def grouptest(request, group):
     from django.template import Context
     sites = Site.objects.values()
-    #print group
+    # print group
     group = Group.objects.get(name=group)
     dict1 = Context({ 'localsite' : sites[0]['domain'],
                       'datasets'  : list(Dataset.objects.filter(group=group))})
@@ -252,8 +255,8 @@ def groups(request, group):
             layers = request.GET["layers"]
         dataset = layers.split("/")[0]
         request.GET = request.GET.copy()
-        request.GET["LAYERS"] = layers.replace(dataset+"/", "")
-        request.GET["layers"] = layers.replace(dataset+"/", "")
+        request.GET["LAYERS"] = layers.replace(dataset + "/", "")
+        request.GET["layers"] = layers.replace(dataset + "/", "")
         return wms(request, dataset)
 
 
@@ -274,7 +277,7 @@ def openlayers(request, filepath):
 
 
 def simpleclient(request):
-    #grid_cache.check_topology_age()
+    # grid_cache.check_topology_age()
     from django.template import Context
     sites = Site.objects.values()
     dict1 = Context({ 'localsite' : sites[0]['domain'],
@@ -309,8 +312,10 @@ def authenticate_view(request):
     else:
         return False
 
+
 def logout_view(request):
     logout(request)
+
 
 def update_dataset(request, dataset):
     if authenticate_view(request):
@@ -322,8 +327,9 @@ def update_dataset(request, dataset):
             return HttpResponse(json.dumps({ "message" : "Scheduled" }), mimetype='application/json')
     else:
         return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), mimetype='application/json')
-        
+
     logout_view(request)
+
 
 def add(request):
     if authenticate_view(request):
@@ -337,7 +343,7 @@ def add(request):
             memberof_groups = []
         else:
             memberof_groups = memberof_groups.split(",")
-            
+
         if dataset_id is None:
             return HttpResponse("Exception: Please include 'id' parameter in POST request.", status=500)
         elif dataset_endpoint is None:
@@ -515,7 +521,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     onlineresource = ET.SubElement(service, "OnlineResource")
     onlineresource.attrib["xlink:type"] = "simple"
     onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    #Contact Information
+    # Contact Information
     contactinformation = ET.SubElement(service, "ContactInformation")
     primarycontact = ET.SubElement(contactinformation, "ContactPersonPrimary")
     ET.SubElement(primarycontact, "ContactPerson").text = servermetadata["contact_person"]
@@ -585,7 +591,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
     getlegend_onlineresource.attrib["xlink:type"] = "simple"
     getlegend_onlineresource.attrib["xlink:href"] = href
     getlegend_onlineresource.attrib["xmlns:xlink"] = "http://www.w3.org/1999/xlink"
-    #Exception
+    # Exception
     exception = ET.SubElement(capability, "Exception")
     ET.SubElement(exception, "Format").text = "text/html"
 
@@ -611,7 +617,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
         if location == "face":
             location = "cell"
         if True:
-            #nc.variables[variable].location
+            # nc.variables[variable].location
             layer1 = ET.SubElement(layer, "Layer")
             layer1.attrib["queryable"] = "1"
             layer1.attrib["opaque"] = "0"
@@ -668,14 +674,14 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
             try:
                 try:
                     units = topology.variables["time"].units
-                #print units
-                #print topology.variables["time"][0], len(topology.variables["time"])
-                #print topology.variables["time"][-1]
+                # print units
+                # print topology.variables["time"][0], len(topology.variables["time"])
+                # print topology.variables["time"][-1]
                     if len(topology.variables["time"]) == 1:
                         time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z"
                     else:
                         if list_timesteps:
-                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
+                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T') + "Z" for i in xrange(topology.variables["time"].shape[0])]
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                         else:
                             time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
@@ -686,7 +692,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                         time_extent.text = str(topology.variables["time"][0]) + "/" + str(topology.variables["time"][-1])
             except:
                 pass
-            ## Listing all available elevation layers is a tough thing to do for the range of types of datasets...
+            # Listing all available elevation layers is a tough thing to do for the range of types of datasets...
             if topology.grid.lower() == 'false':
                 if nc.variables[variable].ndim > 2:
                     try:
@@ -715,11 +721,11 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                     except:
                         ET.SubElement(layer1, "DepthLayers").text = ""
                     try:
-                        #if nc.variables["depth"].positive.lower() == "up":
+                        # if nc.variables["depth"].positive.lower() == "up":
                         #    ET.SubElement(layer1, "DepthDirection").text = "Down"
-                        #elif nc.variables["depth"].positive.lower() == "down":
+                        # elif nc.variables["depth"].positive.lower() == "down":
                         #    ET.SubElement(layer1, "DepthDirection").text = "Up"
-                        #else:
+                        # else:
                         #    ET.SubElement(layer1, "DepthDirection").text = ""
                         ET.SubElement(layer1, "DepthDirection").text = ""
                     except:
@@ -771,7 +777,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                         typetext = "sum or addition of two layers"
                     elif layertype == ",":
                         typetext = "magnitude or vector layer"
-                    ET.SubElement(layer1, "Abstract").text = "Virtual Layer, "+typetext  # "Magnitude of current velocity from u and v components"
+                    ET.SubElement(layer1, "Abstract").text = "Virtual Layer, " + typetext  # "Magnitude of current velocity from u and v components"
                     ET.SubElement(layer1, "SRS").text = "EPSG:4326"
                     llbbox = ET.SubElement(layer1, "LatLonBoundingBox")
                     llbbox.attrib["minx"] = str(numpy.nanmin(templon))
@@ -798,7 +804,7 @@ def getCapabilities(req, dataset):  # TODO move get capabilities to template sys
                     try:
                         units = topology.variables["time"].units
                         if list_timesteps:
-                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T')+"Z" for i in xrange(topology.variables["time"].shape[0])]
+                            temptime = [netCDF4.num2date(topology.variables["time"][i], units).isoformat('T') + "Z" for i in xrange(topology.variables["time"].shape[0])]
                             time_extent.text = temptime.__str__().strip("[]").replace("'", "").replace(" ", "")
                         else:
                             time_extent.text = netCDF4.num2date(topology.variables["time"][0], units).isoformat('T') + "Z/" + netCDF4.num2date(topology.variables["time"][-1], units).isoformat('T') + "Z"
@@ -932,8 +938,8 @@ def getLegendGraphic(request, dataset):
     from matplotlib.pylab import get_cmap
     fig = Figure(dpi=100., facecolor='none', edgecolor='none')
     fig.set_alpha(0)
-    fig.set_figwidth(1*1.3)
-    fig.set_figheight(1.5*1.3)
+    fig.set_figwidth(1 * 1.3)
+    fig.set_figheight(1.5 * 1.3)
 
     """
     Create the colorbar or legend and add to axis
@@ -943,14 +949,14 @@ def getLegendGraphic(request, dataset):
     except:
         units = ''
     if climits[0] is None or climits[1] is None:  # TODO: NOT SUPPORTED RESPONSE
-            #going to have to get the data here to figure out bounds
-            #need elevation, bbox, time, magnitudebool
-            CNorm = None
-            ax = fig.add_axes([0, 0, 1, 1])
-            ax.grid(False)
-            ax.text(.5, .5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
+            # going to have to get the data here to figure out bounds
+            # need elevation, bbox, time, magnitudebool
+        CNorm = None
+        ax = fig.add_axes([0, 0, 1, 1])
+        ax.grid(False)
+        ax.text(.5, .5, 'Error: No Legend\navailable for\nautoscaled\ncolor styles!', ha='center', va='center', transform=ax.transAxes, fontsize=8)
     elif plot_type not in ["contours", "filledcontours"]:
-        #use limits described by the style
+        # use limits described by the style
         ax = fig.add_axes([.01, .05, .2, .8])  # xticks=[], yticks=[])
         CNorm = matplotlib.colors.Normalize(vmin=climits[0],
                                             vmax=climits[1],
@@ -964,7 +970,7 @@ def getLegendGraphic(request, dataset):
         cb.set_label(units)
     else:  # plot type somekind of contour
         if plot_type == "contours":
-            #this should perhaps be a legend...
+            # this should perhaps be a legend...
             #ax = fig.add_axes([0,0,1,1])
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
@@ -985,7 +991,7 @@ def getLegendGraphic(request, dataset):
                        frameon = False,
                        )
         elif plot_type == "filledcontours":
-            #this should perhaps be a legend...
+            # this should perhaps be a legend...
             #ax = fig.add_axes([0,0,1,1])
             fig_proxy = Figure(frameon=False, facecolor='none', edgecolor='none')
             ax_proxy = fig_proxy.add_axes([0, 0, 1, 1])
@@ -1001,15 +1007,15 @@ def getLegendGraphic(request, dataset):
 
             levels = []
             for i, value in enumerate(levs):
-                #if i == 0:
+                # if i == 0:
                 #    levels[i] = "<" + str(value)
-                if i == len(levs)-2 or i == len(levs)-1:
+                if i == len(levs) - 2 or i == len(levs) - 1:
                     levels.append("> " + str(value))
                 elif i == 0:
-                    levels.append("< " + str(levs[i+1]))
+                    levels.append("< " + str(levs[i + 1]))
                 else:
                     #levels.append(str(value) + "-" + str(levs[i+1]))
-                    text = '%.2f-%.2f' % (value, levs[i+1])
+                    text = '%.2f-%.2f' % (value, levs[i + 1])
                     levels.append(text)
             logger.info( str((levels, levs)) )
             fig.legend(proxy, levels,

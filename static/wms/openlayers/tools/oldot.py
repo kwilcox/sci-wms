@@ -1,18 +1,20 @@
 import re
 import os    
+
+
 def run():
     sourceDirectory = "../lib/OpenLayers"    
     allFiles = []
     SUFFIX_JAVASCRIPT = ".js"
-    ## Find all the Javascript source files
+    # Find all the Javascript source files
     for root, dirs, files in os.walk(sourceDirectory):
         for filename in files:
             if filename.endswith(SUFFIX_JAVASCRIPT) and not filename.startswith("."):
-                filepath = os.path.join(root, filename)[len(sourceDirectory)+1:]
+                filepath = os.path.join(root, filename)[len(sourceDirectory) + 1:]
                 filepath = filepath.replace("\\", "/")
                 data = open(os.path.join(sourceDirectory, filepath)).read()
                 parents = re.search("OpenLayers.Class\((.*?){", data, 
-                      re.DOTALL)
+                                    re.DOTALL)
                 if parents:
                     parents = [x.strip() for x in parents.group(1).strip().strip(",").split(",")]
                 else: 
@@ -36,8 +38,9 @@ digraph name {
 for i in run():
     print i[0].replace(".", "_")
     for item in i[1]:
-        if not item: continue
-        print "%s -> %s" % (i[0].replace(".","_"), item.replace(".", "_"))
+        if not item:
+            continue
+        print "%s -> %s" % (i[0].replace(".", "_"), item.replace(".", "_"))
     print "; "
 
 print """}"""

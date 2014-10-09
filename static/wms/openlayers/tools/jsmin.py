@@ -32,6 +32,7 @@
 
 from StringIO import StringIO
 
+
 def jsmin(js):
     ins = StringIO(js)
     outs = StringIO()
@@ -41,26 +42,32 @@ def jsmin(js):
         str = str[1:]
     return str
 
+
 def isAlphanum(c):
     """return true if the character is a letter, digit, underscore,
            dollar sign, or non-ASCII character.
     """
     return ((c >= 'a' and c <= 'z') or (c >= '0' and c <= '9') or
-            (c >= 'A' and c <= 'Z') or c == '_' or c == '$' or c == '\\' or (c is not None and ord(c) > 126));
+            (c >= 'A' and c <= 'Z') or c == '_' or c == '$' or c == '\\' or (c is not None and ord(c) > 126))
+
 
 class UnterminatedComment(Exception):
     pass
 
+
 class UnterminatedStringLiteral(Exception):
     pass
 
+
 class UnterminatedRegularExpression(Exception):
     pass
+
 
 class JavascriptMinify(object):
 
     def _outA(self):
         self.outstream.write(self.theA)
+
     def _outB(self):
         self.outstream.write(self.theB)
 
@@ -71,11 +78,11 @@ class JavascriptMinify(object):
         """
         c = self.theLookahead
         self.theLookahead = None
-        if c == None:
+        if c is None:
             c = self.instream.read(1)
         if c >= ' ' or c == '\n':
             return c
-        if c == '': # EOF
+        if c == '':  # EOF
             return '\000'
         if c == '\r':
             return '\n'
@@ -99,7 +106,7 @@ class JavascriptMinify(object):
                 return c
             if p == '*':
                 c = self._get()
-                while 1:
+                while True:
                     c = self._get()
                     if c == '*':
                         if self._peek() == '/':
@@ -124,7 +131,7 @@ class JavascriptMinify(object):
         if action <= 2:
             self.theA = self.theB
             if self.theA == "'" or self.theA == '"':
-                while 1:
+                while True:
                     self._outA()
                     self.theA = self._get()
                     if self.theA == self.theB:
@@ -135,7 +142,6 @@ class JavascriptMinify(object):
                         self._outA()
                         self.theA = self._get()
 
-
         if action <= 3:
             self.theB = self._next()
             if self.theB == '/' and (self.theA == '(' or self.theA == ',' or
@@ -145,7 +151,7 @@ class JavascriptMinify(object):
                                      self.theA == '|'):
                 self._outA()
                 self._outB()
-                while 1:
+                while True:
                     self.theA = self._get()
                     if self.theA == '/':
                         break
@@ -156,7 +162,6 @@ class JavascriptMinify(object):
                         raise UnterminatedRegularExpression()
                     self._outA()
                 self.theB = self._next()
-
 
     def _jsmin(self):
         """Copy the input to the output, deleting the characters which are

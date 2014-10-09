@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.DateTimeField')(null=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'Dataset.cache_last_updated'
         db.delete_column(u'wms_dataset', 'cache_last_updated')
-
 
     models = {
         u'wms.dataset': {
