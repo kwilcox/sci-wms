@@ -54,14 +54,8 @@ from django.conf import settings
 
 import pyugrid
 
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-# Set up Logger
-logger = multiprocessing.get_logger()
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+import logging
+logger = logging.getLogger('wms')
 
 time_units = 'hours since 1970-01-01'
 
