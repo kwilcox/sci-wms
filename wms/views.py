@@ -26,7 +26,6 @@ import gc
 import sys
 import json
 import bisect
-import logging
 import datetime
 import traceback
 import subprocess
@@ -70,15 +69,8 @@ from sciwms.util import cf
 import pyugrid
 import numpy as np
 
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-# Set up Logger
-logger = multiprocessing.get_logger()
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - |%(message)s|')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
+import logging
+logger = logging.getLogger('wms')
 
 def crossdomain(request):
     with open(os.path.join(settings.COMMON_STATIC_FILES, "common", "crossdomain.xml")) as f:
