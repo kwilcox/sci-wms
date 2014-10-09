@@ -17,15 +17,16 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from django.conf import settings
 from django.http import HttpResponse
 
-from . import wms_handler
-from ...util.cf import get_by_standard_name
-from ...util import get_pyproj
+from wms import wms_handler
+from sciwms.util.cf import get_by_standard_name
+from sciwms.util import get_pyproj
 
 import numpy as np
 
 import netCDF4
 
-logger = multiprocessing.get_logger()
+import logging
+logger = logging.getLogger('wms')
 
 def get_lat_lon_subset_idx(lon,lat,lonmin,latmin,lonmax,latmax,padding=0.18):
     """

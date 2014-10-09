@@ -30,7 +30,10 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-def groupGetCapabilities(req, group, logger): # TODO move get capabilities to template system like sciwps
+import logging
+logger = logging.getLogger('wms')
+
+def groupGetCapabilities(req, group): # TODO move get capabilities to template system like sciwps
     """
     get capabilities document based on this getcaps:
 

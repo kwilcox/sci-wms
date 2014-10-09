@@ -16,7 +16,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Dataset
+from wms.models import Dataset
 
 try:
     import xml.etree.cElementTree as ET
@@ -29,22 +29,15 @@ import netCDF4
 import pyugrid
 from rtree import index as rindex
 
-from . import wms_handler
-from .matplotlib_handler import blank_canvas,\
+from wms import wms_handler
+from wms.matplotlib_handler import blank_canvas,\
      quiver_response, get_nearest_start_time, contourf_response
-from ...util import cf, get_pyproj,\
+from sciwms.util import cf, get_pyproj,\
       get_rtree_nodes_path, rtree_nodes_exists,\
       print_exception
 
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-# Set up Logger
-logger = multiprocessing.get_logger()
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(output_path)
-formatter = logging.Formatter(fmt='[%(asctime)s] - <<%(levelname)s>> - getFeatureInfo - |%(message)s|')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
+import logging
+logger = logging.getLogger('wms')
 
 def getFeatureInfo(request, dataset):
     """

@@ -17,18 +17,17 @@ import netCDF4
 import pyproj
 import pyugrid
 
-from . import wms_handler
-from .matplotlib_handler import blank_canvas, quiver_response, get_nearest_start_time, contourf_response
-from .models import Dataset as dbDataset
-from ...util import cf, get_pyproj
-from ...libs.data.ugrid import Ugrid
+from wms import wms_handler
+from wms.matplotlib_handler import blank_canvas, quiver_response, get_nearest_start_time, contourf_response
+from wms.models import Dataset as dbDataset
+from sciwms.util import cf, get_pyproj
+from sciwms.libs.data.ugrid import Ugrid
 
 import rtree
-from ...libs.data.caching import FastRtree
+from sciwms.libs.data.caching import FastRtree
 
-
-output_path = os.path.join(settings.PROJECT_ROOT, 'logs', 'sciwms_wms.log')
-logger = multiprocessing.get_logger()
+import logging
+logger = logging.getLogger('wms')
 
 def getMap(request, dataset):
     """

@@ -243,7 +243,7 @@ def groups(request, group):
             return dshorts.render_to_response('index.html', context)
     if reqtype.lower() == "getcapabilities":  # Do GetCapabilities
         group = Group.objects.get(name=group)
-        caps = wms_reqs.groupGetCapabilities(request, group, logger)
+        caps = wms_reqs.groupGetCapabilities(request, group)
         return caps
     elif reqtype is not None:
         try:

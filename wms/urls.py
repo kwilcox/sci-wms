@@ -32,10 +32,10 @@ urlpatterns = patterns( '',
                         url(r'^datasets/(?P<dataset>.*)/update', 'wms.views.update_dataset', name="update_dataset"),
                         url(r'^datasets/(?P<dataset>.*)/', 'wms.views.wms', name="dataset"),
 
-                        url(r'^standard_names', 'sciwms.apps.wms.views.standard_names'),
+                        url(r'^standard_names', 'wms.views.standard_names'),
 
                         # Colormaps
-                        url(r'^colormaps', 'sciwms.apps.wms.views.colormaps'),
+                        url(r'^colormaps', 'wms.views.colormaps'),
 
                         # Clients
                         url(r'^openlayers/(?P<filepath>.*)', 'wms.views.openlayers'),

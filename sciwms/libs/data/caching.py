@@ -45,7 +45,7 @@ import numpy as np
 from netCDF4 import Dataset as ncDataset
 from netCDF4 import date2num
 
-from sciwms.apps.wms.models import Dataset
+from wms.models import Dataset
 from sciwms.libs.data import build_tree
 
 import rtree

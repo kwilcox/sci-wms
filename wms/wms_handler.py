@@ -27,7 +27,8 @@ import numpy as np
 from datetime import date
 from django.conf import settings
 
-logger = multiprocessing.get_logger()
+import logging
+logger = logging.getLogger('wms')
 
 def get_bbox(request):
     """
